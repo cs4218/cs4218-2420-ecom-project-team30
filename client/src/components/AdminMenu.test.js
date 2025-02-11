@@ -1,4 +1,5 @@
 //This file done by Austin
+//AI declaration: This code below was supported by the AI tool, chatgpt.com
 import React from "react";
 import { render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
