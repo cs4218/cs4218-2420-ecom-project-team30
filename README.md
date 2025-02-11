@@ -1,1 +1,1 @@
-Link to github actions task: https://github.com/cs4218/cs4218-2420-ecom-project-team30/actions/runs/13256993569/job/37005462984
+Milestone 1 CI link: https://github.com/cs4218/cs4218-2420-ecom-project-team30/actions/runs/13256993569/job/37005462984
