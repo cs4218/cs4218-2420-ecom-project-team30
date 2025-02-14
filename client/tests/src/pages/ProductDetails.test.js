@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, fireEvent, waitFor, screen } from '@testing-library/react';
 import axios from 'axios';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import '@testing-library/jest-dom/extend-expect';
@@ -23,34 +23,64 @@ jest.mock('../../../src/context/search', () => ({
     
 jest.mock('../../../src/hooks/useCategory', () => jest.fn(() => []));
 
-describe('basic test', () => {
-  it('runs', () => {
-    expect(4).toBe(4);
-  })
-})
+const PRODUCT = {
+  _id: 'productid',
+  category: {
+    _id: 'catid',
+    name: 'category name'
+  },
+  name: 'product name',
+  description: 'product desc',
+  price: 1.00,
+};
+
+const RELATED_PRODUCT_1 = {
+  _id: 'relatedproductid',
+  category: {
+    _id: 'catid',
+    name: 'category name'
+  },
+  name: 'related product name',
+  description: 'product desc',
+  price: 2.00,
+};
+
+const RELATED_PRODUCT_2 = {
+  _id: 'relatedproductid2',
+  category: {
+    _id: 'catid',
+    name: 'category name'
+  },
+  name: 'related product name 2',
+  description: 'product desc 2',
+  price: 3.00,
+};
 
 describe('ProductDetails', () => {
-  it('renders', async () => {
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.restoreAllMocks();
+
+    axios.get.mockResolvedValueOnce({
+      data: {
+        product: PRODUCT
+      }
+    });
+
     axios.get.mockResolvedValueOnce({ 
       data: {
-        product: {
-          _id: 'productid',
-          category: {
-            _id: 'catid',
-            name: 'category name'
-          },
-          name: 'product name',
-          description: 'product desc',
-          price: 1.00,
-        },
+        products: [ RELATED_PRODUCT_1, RELATED_PRODUCT_2 ]
       }
-    }).mockResolvedValueOnce({ 
-      data: {
-        products: []
-      }
-    })
+    });
 
-    const {getByText} = render(
+    // console.log(axios.get.mock.calls)
+  })
+
+
+  it('renders page', async () => {
+
+    const {getByText, getByRole} = render(
       <MemoryRouter initialEntries={['/product/slooge']}>
         <Routes>
           <Route path="/product/:slug" element={<ProductDetails />} />
@@ -58,11 +88,50 @@ describe('ProductDetails', () => {
       </MemoryRouter>
     )
 
-    await waitFor(() => expect(axios.get).toHaveBeenCalledTimes(2))
-    expect(getByText('Product Details')).toBeInTheDocument()
+    await waitFor(() => expect(getByText('Name : product name')).toBeInTheDocument())
+
     expect(axios.get).toHaveBeenCalledWith('/api/v1/product/get-product/slooge');
     expect(axios.get).toHaveBeenCalledWith('/api/v1/product/related-product/productid/catid');
-    
+
   })
+
+  it('Redirects to the related product page', async () => {
+
+    // mock axios for navigated page
+
+    axios.get.mockResolvedValueOnce({ 
+      data: {
+        product: RELATED_PRODUCT_2,
+      }
+    });
+
+    axios.get.mockResolvedValueOnce({ 
+      data: {
+        products: []
+      }
+    });
+
+    const {getByText, getAllByText, container} = render(
+      <MemoryRouter initialEntries={['/product/slooge']}>
+        <Routes>
+          <Route path="/product/:slug" element={<ProductDetails />} />
+        </Routes>
+      </MemoryRouter>
+    )
+
+    // console.log(JSON.stringify(await Promise.all(axios.get.mock.results.map(r => r.value))));
+    
+    
+    await waitFor(() => expect(getByText('Name : product name')).toBeInTheDocument());
+    
+    const related = getAllByText("More Details");
+    expect(related.length).toBe(2);
+    
+    fireEvent.click(related[1]);
+    await waitFor(() => expect(getByText('Name : related product name 2')).toBeInTheDocument())
+
+  })
+
+
 })
 
