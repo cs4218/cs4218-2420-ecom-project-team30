@@ -1,0 +1,237 @@
+import { jest } from "@jest/globals";
+import { registerController, loginController } from "./authController";
+import userModel from "../models/userModel";
+import { hashPassword, comparePassword } from "./../helpers/authHelper";
+
+jest.mock("../models/userModel.js");
+jest.mock("./../helpers/authHelper.js", () => {
+  return {
+    __esModule: true,
+    comparePassword: jest.fn().mockResolvedValue(true),
+    hashPassword: jest.fn().mockResolvedValue("hashedPassword12345"),
+  }
+});
+jest.mock("jsonwebtoken", () => ({
+  sign: jest.fn().mockReturnValue("token"),
+}));
+
+describe("Register Controller Test", () => {
+  let req, res;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    req = {
+      body: {
+        name: "John Doe",
+        email: "john@example.com",
+        phone: "12344000",
+        address: "123 Street",
+        password: "hashedPassword123",
+        answer: "Football",
+      },
+    };
+
+    res = {
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn(),
+    };
+  });
+
+  test("user model is not saved for invalid email", async () => {
+    userModel.findOne = jest.fn().mockResolvedValue(null);
+    userModel.prototype.save = jest.fn();
+    req.body.email = "invalid-email";
+
+    await registerController(req, res);
+    expect(userModel.prototype.save).not.toHaveBeenCalled();
+  });
+
+  test("returns error if name is missing", async () => {
+    req.body.name = "";
+
+    await registerController(req, res);
+    expect(res.send).toHaveBeenCalledWith({ error: "Name is Required" });
+  });
+
+  test("returns error if email is missing", async () => {
+    req.body.email = "";
+
+    await registerController(req, res);
+    expect(res.send).toHaveBeenCalledWith({ message: "Email is Required" });
+  });
+
+  test("returns error if password is missing", async () => {
+    req.body.password = "";
+
+    await registerController(req, res);
+    expect(res.send).toHaveBeenCalledWith({
+      message: "Password is Required",
+    });
+  });
+
+  test("returns error if phone is missing", async () => {
+    req.body.phone = "";
+
+    await registerController(req, res);
+    expect(res.send).toHaveBeenCalledWith({
+      message: "Phone no is Required",
+    });
+  });
+
+  test("returns error if address is missing", async () => {
+    req.body.address = "";
+
+    await registerController(req, res);
+    expect(res.send).toHaveBeenCalledWith({
+      message: "Address is Required",
+    });
+  });
+
+  test("returns error if answer is missing", async () => {
+    req.body.answer = "";
+
+    await registerController(req, res);
+    expect(res.send).toHaveBeenCalledWith({
+      message: "Answer is Required",
+    });
+  });
+
+  test("returns unsuccess registration if user already exists", async () => {
+    let email = "john@example.com";
+    userModel.findOne = jest.fn().mockResolvedValue({ ...req.body });
+    req.body.email = email;
+
+    await registerController(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.send).toHaveBeenCalledWith({
+      success: false,
+      message: "Already Register please login",
+    });
+  });
+
+  test("registers user successfully", async () => {
+    let user = { ...req.body, _id: "123" };
+    
+    userModel.findOne = jest.fn().mockResolvedValue(null);
+    userModel.prototype.save = jest.fn().mockReturnThis();
+
+    await registerController(req, res);
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.send).toHaveBeenCalledWith({
+      success: true,
+      message: "User Register Successfully",
+      user: expect.objectContaining(user),
+    });
+  });
+
+  test("handles server error", async () => {
+    userModel.findOne = jest.fn().mockRejectedValue(new Error("Server Error"));
+
+    await registerController(req, res);
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.send).toHaveBeenCalledWith({
+      success: false,
+      message: "Errro in Registeration",
+      error: new Error("Server Error"),
+    });
+  });
+});
+
+describe("Login controller test", () => {
+  let req, res;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    req = {
+      body: {
+        email: "john@example.com",
+        password: "password123",
+      },
+    };
+
+    res = {
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn(),
+    };
+  });
+
+  test("returns error if email is missing", async () => {
+    req.body.email = "";
+
+    await loginController(req, res);
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.send).toHaveBeenCalledWith({
+      success: false,
+      message: "Invalid email or password",
+    });
+  });
+
+  test("returns error if password is missing", async () => {
+    req.body.password = "";
+
+    await loginController(req, res);
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.send).toHaveBeenCalledWith({
+      success: false,
+      message: "Invalid email or password",
+    });
+  });
+
+  test("returns error if user is not found", async () => {
+    userModel.findOne = jest.fn().mockResolvedValue(null);
+
+    await loginController(req, res);
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.send).toHaveBeenCalledWith({
+      success: false,
+      message: "Email is not registerd",
+    });
+  });
+
+  test("returns error if password is incorrect", async () => {
+    userModel.findOne = jest.fn().mockResolvedValue({ password: "password" });
+
+    await loginController(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.send).toHaveBeenCalledWith({
+      success: false,
+      message: "Invalid Password",
+    });
+  });
+
+  test("returns token if login is successful", async () => {
+    let user = {
+      _id: "123",
+      ...req.body,
+    };
+    userModel.findOne = jest.fn().mockResolvedValue(user);
+
+    jest.mock("./../helpers/authHelper.js", () => ({
+      __esModule: true,
+      comparePassword: jest.fn().mockResolvedValue(true),
+    }));
+
+    await loginController(req, res);
+    // expect(comparePassword).toHaveBeenCalledWith(req.body.password, user.password);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.send).toHaveBeenCalledWith({
+      success: true,
+      token: "token",
+      user,
+    });
+  });
+
+  test("handles server error", async () => {
+    userModel.findOne = jest.fn().mockRejectedValue(new Error("Server Error"));
+
+    await loginController(req, res);
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.send).toHaveBeenCalledWith({
+      success: false,
+      message: "Error in login",
+      error: new Error("Server Error"),
+    });
+  });
+});
