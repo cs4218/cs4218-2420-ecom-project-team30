@@ -60,7 +60,6 @@ describe('ProductDetails', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.restoreAllMocks();
 
     axios.get.mockResolvedValueOnce({
       data: {

@@ -69,7 +69,6 @@ describe('Cart Page', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.restoreAllMocks();
 
     axios.get.mockResolvedValueOnce({
       data: {
