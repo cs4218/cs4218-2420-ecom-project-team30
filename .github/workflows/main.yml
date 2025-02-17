@@ -26,7 +26,7 @@ jobs:
           cd client
           npm install
       
-      - name: Run tests
+      - name: Run Frontend tests
         run: npm run test:frontend
         continue-on-error: true
 
