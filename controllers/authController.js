@@ -1,10 +1,10 @@
-const userModel = require("../models/userModel.js");
-const orderModel = require("../models/orderModel.js");
+import userModel from "../models/userModel.js";
+import orderModel from "../models/orderModel.js";
 
-const { comparePassword, hashPassword } = require("./../helpers/authHelper.js");
-const JWT = require("jsonwebtoken");
+import { comparePassword, hashPassword } from "./../helpers/authHelper.js";
+import JWT from "jsonwebtoken";
 
-const registerController = async (req, res) => {
+export const registerController = async (req, res) => {
   try {
     const { name, email, password, phone, address, answer } = req.body;
     //validations
@@ -63,7 +63,7 @@ const registerController = async (req, res) => {
 };
 
 //POST LOGIN
-const loginController = async (req, res) => {
+export const loginController = async (req, res) => {
   try {
     const { email, password } = req.body;
     //validation
@@ -117,7 +117,7 @@ const loginController = async (req, res) => {
 
 //forgotPasswordController
 
-const forgotPasswordController = async (req, res) => {
+export const forgotPasswordController = async (req, res) => {
   try {
     const { email, answer, newPassword } = req.body;
     if (!email) {
@@ -155,7 +155,7 @@ const forgotPasswordController = async (req, res) => {
 };
 
 //test controller
-const testController = (req, res) => {
+export const testController = (req, res) => {
   try {
     res.send("Protected Routes");
   } catch (error) {
@@ -165,7 +165,7 @@ const testController = (req, res) => {
 };
 
 //update prfole
-const updateProfileController = async (req, res) => {
+export const updateProfileController = async (req, res) => {
   try {
     const { name, email, password, address, phone } = req.body;
     const user = await userModel.findById(req.user._id);
@@ -200,7 +200,7 @@ const updateProfileController = async (req, res) => {
 };
 
 //orders
-const getOrdersController = async (req, res) => {
+export const getOrdersController = async (req, res) => {
   try {
     const orders = await orderModel
       .find({ buyer: req.user._id })
@@ -217,7 +217,7 @@ const getOrdersController = async (req, res) => {
   }
 };
 //orders
-const getAllOrdersController = async (req, res) => {
+export const getAllOrdersController = async (req, res) => {
   try {
     const orders = await orderModel
       .find({})
@@ -236,7 +236,7 @@ const getAllOrdersController = async (req, res) => {
 };
 
 //order status
-const orderStatusController = async (req, res) => {
+export const orderStatusController = async (req, res) => {
   try {
     const { orderId } = req.params;
     const { status } = req.body;
@@ -254,15 +254,4 @@ const orderStatusController = async (req, res) => {
       error,
     });
   }
-};
-
-module.exports = {
-  registerController,
-  loginController,
-  forgotPasswordController,
-  testController,
-  updateProfileController,
-  getOrdersController,
-  getAllOrdersController,
-  orderStatusController,
 };
