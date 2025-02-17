@@ -10,20 +10,20 @@ import { TbRuler3 } from 'react-icons/tb';
 jest.mock('axios');
 
 jest.mock('antd', () => {
-  const actualAntd = jest.requireActual('antd');
-  const MockSelect = ({ children, onChange, 'data-testid': testId }) => (
+  const actAntd = jest.requireActual('antd');
+  const mockForSelect = ({ children, onChange, 'data-testid': testId }) => (
     <select data-testid={testId} onChange={(e) => onChange(e.target.value)}>
       {children}
     </select>
   );
 
-  MockSelect.Option = ({ children, value, 'data-testid': testId }) => (
+  mockForSelect.Option = ({ children, value, 'data-testid': testId }) => (
     <option value={value} data-testid={testId}>
       {children}
     </option>
   );
 
-  return { ...actualAntd, Select: MockSelect };
+  return { ...actAntd, Select: mockForSelect };
 });
 
 jest.mock('react-hot-toast', () => ({
