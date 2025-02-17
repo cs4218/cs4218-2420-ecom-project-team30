@@ -37,7 +37,6 @@ export const registerController = async (req, res) => {
     }
     //register user
     const hashedPassword = await hashPassword(password);
-    console.log(hashedPassword);
     //save
     const user = await new userModel({
       name,
@@ -83,7 +82,6 @@ export const loginController = async (req, res) => {
       });
     }
     const match = await comparePassword(password, user.password);
-    console.log(match);
     if (!match) {
       return res.status(200).send({
         success: false,
