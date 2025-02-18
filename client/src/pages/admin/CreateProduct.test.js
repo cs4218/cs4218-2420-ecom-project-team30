@@ -66,23 +66,22 @@ describe('CreateProduct Component', () => {
     jest.clearAllMocks();
   });
 
-  // test('renders the create product form', async () => {
-  //   render(
-  //     <BrowserRouter>
-  //       <CreateProduct />
-  //     </BrowserRouter>
-  //   );
+  test('renders the create product form', async () => {
+    render(
+      <BrowserRouter>
+        <CreateProduct />
+      </BrowserRouter>
+    );
 
-  //   expect(await screen.findByText('Create Product')).toBeInTheDocument();
-  //   expect(screen.getByPlaceholderText('write a name')).toBeInTheDocument();
-  //   expect(
-  //     screen.getByPlaceholderText('write a description')
-  //   ).toBeInTheDocument();
-  //   expect(screen.getByPlaceholderText('write a Price')).toBeInTheDocument();
-  //   expect(screen.getByPlaceholderText('write a quantity')).toBeInTheDocument();
-  //   expect(screen.getByText('Upload Photo')).toBeInTheDocument();
-  //   expect(screen.getByText('Select a category')).toBeInTheDocument();
-  // });
+    expect(await screen.findByText('Create Product')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('write a name')).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText('write a description')
+    ).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('write a Price')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('write a quantity')).toBeInTheDocument();
+    expect(screen.getByText('Upload Photo')).toBeInTheDocument();
+  });
 
   test('fetches and displays categories', async () => {
     // Mock the axios.get response
