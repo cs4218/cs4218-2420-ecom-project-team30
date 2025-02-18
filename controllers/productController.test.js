@@ -1,5 +1,5 @@
-const controllers = require('./productController')
-const productModel = require("../models/productModel")
+import * as controllers from './productController'
+import productModel from "../models/productModel"
 
 jest.mock('dotenv')
 jest.mock('braintree')
@@ -19,7 +19,13 @@ jest.mock("../models/productModel", () => {
   return t;
 })
 
+
 describe('getSingleProductController', () => {
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  })
+
   it('retrieves a product successfully', async () => {
     const req = {
       params: {
