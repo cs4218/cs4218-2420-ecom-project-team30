@@ -22,7 +22,6 @@ const CreateProduct = () => {
   const getAllCategory = async () => {
     try {
       const { data } = await axios.get('/api/v1/category/get-category');
-      console.log(data);
       if (!data.success) {
         throw new Error('Something went wrong in getting category');
       }
