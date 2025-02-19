@@ -69,5 +69,7 @@ describe("Categories Component", () => {
 
     const testCategory = screen.queryAllByText("Test Category 1");
     expect(testCategory).toHaveLength(0);
+
+    expect(screen.getByText("No categories found")).toBeInTheDocument();
   });
 });
