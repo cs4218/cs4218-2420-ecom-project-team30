@@ -1,4 +1,3 @@
-/** @type {import('jest').Config} */
 export default {
   // display name
   displayName: "backend",
@@ -18,6 +17,4 @@ export default {
       functions: 100,
     },
   },
-
-  transform: {}
 };

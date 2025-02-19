@@ -1,14 +1,12 @@
-import { jest } from "@jest/globals";
 import userModel from "../models/userModel";
 import JWT from "jsonwebtoken";
-jest.unstable_mockModule("../helpers/authHelper.js", () => ({
-  __esModule: true,
+import { hashPassword, comparePassword } from "../helpers/authHelper.js"
+import { registerController, loginController } from "./authController"
+
+jest.mock("../helpers/authHelper.js", () => ({
   hashPassword: jest.fn(),
   comparePassword: jest.fn(),
-  default: {}
 }));
-const { hashPassword, comparePassword } = await import("../helpers/authHelper.js");
-const { registerController, loginController } = await import("./authController");
 
 jest.mock("../models/userModel.js");
 jest.mock("jsonwebtoken");
@@ -113,9 +111,9 @@ describe("Register Controller Test", () => {
     let user = { ...req.body };
     
     userModel.findOne = jest.fn().mockResolvedValue(null);
-    userModel.prototype.save = jest.fn().mockReturnThis();
+    userModel.prototype.save = jest.fn().mockResolvedValue(user);
 
-    hashPassword.mockResolvedValue("hashedPassword123");
+    hashPassword.mockResolvedValueOnce("hashedPassword123");
 
     await registerController(req, res);
     expect(res.status).toHaveBeenCalledWith(201);
