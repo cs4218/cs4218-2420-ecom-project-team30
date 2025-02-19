@@ -11,8 +11,16 @@ jest.mock('axios');
 
 jest.mock('antd', () => {
   const actAntd = jest.requireActual('antd');
-  const mockForSelect = ({ children, onChange, 'data-testid': testId }) => (
-    <select data-testid={testId} onChange={(e) => onChange(e.target.value)}>
+  const mockForSelect = ({
+    children,
+    onChange,
+    'data-testid': testId,
+    placeholder,
+  }) => (
+    <select
+      data-testid={testId || placeholder?.replace(/\s+/g, '-').toLowerCase()}
+      onChange={(e) => onChange(e.target.value)}
+    >
       {children}
     </select>
   );
@@ -240,5 +248,51 @@ describe('CreateProduct Component', () => {
         'Something went wrong in getting category'
       );
     });
+  });
+
+  test('handles category selection change', async () => {
+    // Mock the axios.get response for categories
+    axios.get.mockResolvedValueOnce({
+      data: {
+        success: true,
+        category: [
+          { _id: '1', name: 'Category 1' },
+          { _id: '2', name: 'Category 2' },
+        ],
+      },
+    });
+
+    render(
+      <BrowserRouter>
+        <CreateProduct />
+      </BrowserRouter>
+    );
+
+    // Wait for categories to load
+    await waitFor(() => {
+      expect(screen.queryAllByTestId(/category-option/)).toHaveLength(2);
+    });
+
+    // Find and change the category select using the data-testid
+    const categorySelect = screen.getByTestId('select-a-category');
+    fireEvent.change(categorySelect, { target: { value: '1' } });
+
+    // Verify the change was handled
+    expect(categorySelect.value).toBe('1');
+  });
+
+  test('handles shipping selection change', async () => {
+    render(
+      <BrowserRouter>
+        <CreateProduct />
+      </BrowserRouter>
+    );
+
+    // Find and change the shipping select using the data-testid
+    const shippingSelect = screen.getByTestId('select-shipping-');
+    fireEvent.change(shippingSelect, { target: { value: '1' } });
+
+    // Verify the change was handled
+    expect(shippingSelect.value).toBe('1');
   });
 });
