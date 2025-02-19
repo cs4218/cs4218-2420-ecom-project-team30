@@ -1,45 +1,48 @@
-import React, { useEffect, useState } from "react";
-import Layout from "./../../components/Layout";
-import AdminMenu from "./../../components/AdminMenu";
-import toast from "react-hot-toast";
-import axios from "axios";
-import CategoryForm from "../../components/Form/CategoryForm";
-import { Modal } from "antd";
+import React, { useEffect, useState } from 'react';
+import Layout from './../../components/Layout';
+import AdminMenu from './../../components/AdminMenu';
+import toast from 'react-hot-toast';
+import axios from 'axios';
+import CategoryForm from '../../components/Form/CategoryForm';
+import { Modal } from 'antd';
+import { th } from 'date-fns/locale';
 const CreateCategory = () => {
   const [categories, setCategories] = useState([]);
-  const [name, setName] = useState("");
+  const [name, setName] = useState('');
   const [visible, setVisible] = useState(false);
   const [selected, setSelected] = useState(null);
-  const [updatedName, setUpdatedName] = useState("");
+  const [updatedName, setUpdatedName] = useState('');
   //handle Form
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const { data } = await axios.post("/api/v1/category/create-category", {
+      const { data } = await axios.post('/api/v1/category/create-category', {
         name,
       });
       if (data?.success) {
         toast.success(`${name} is created`);
         getAllCategory();
       } else {
-        toast.error(data.message);
+        throw new Error('something went wrong in input form');
       }
     } catch (error) {
       console.log(error);
-      toast.error("somthing went wrong in input form");
+      toast.error('something went wrong in input form');
     }
   };
 
   //get all cat
   const getAllCategory = async () => {
     try {
-      const { data } = await axios.get("/api/v1/category/get-category");
+      const { data } = await axios.get('/api/v1/category/get-category');
       if (data.success) {
         setCategories(data.category);
+      } else {
+        throw new Error('Something went wrong in getting category');
       }
     } catch (error) {
       console.log(error);
-      toast.error("Something wwent wrong in getting catgeory");
+      toast.error('Something went wrong in getting category');
     }
   };
 
@@ -58,14 +61,14 @@ const CreateCategory = () => {
       if (data.success) {
         toast.success(`${updatedName} is updated`);
         setSelected(null);
-        setUpdatedName("");
+        setUpdatedName('');
         setVisible(false);
         getAllCategory();
       } else {
-        toast.error(data.message);
+        throw new Error('Something went wrong in updating category');
       }
     } catch (error) {
-      toast.error("Somtihing went wrong");
+      toast.error('Something went wrong in updating category');
     }
   };
   //delete category
@@ -79,14 +82,14 @@ const CreateCategory = () => {
 
         getAllCategory();
       } else {
-        toast.error(data.message);
+        throw new Error('Something went wrong in deleting category');
       }
     } catch (error) {
-      toast.error("Somtihing went wrong");
+      toast.error('Something went wrong in deleting category');
     }
   };
   return (
-    <Layout title={"Dashboard - Create Category"}>
+    <Layout title={'Dashboard - Create Category'}>
       <div className="container-fluid m-3 p-3">
         <div className="row">
           <div className="col-md-3">
