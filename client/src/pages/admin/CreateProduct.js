@@ -166,6 +166,7 @@ const CreateProduct = () => {
                   onChange={(value) => {
                     setShipping(value);
                   }}
+                  data-testid="select-shipping" // Add this line
                 >
                   <Option value="0">No</Option>
                   <Option value="1">Yes</Option>

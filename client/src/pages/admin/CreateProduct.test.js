@@ -9,6 +9,8 @@ import { TbRuler3 } from 'react-icons/tb';
 
 jest.mock('axios');
 
+global.URL.createObjectURL = jest.fn(() => 'mock-url');
+
 jest.mock('antd', () => {
   const actAntd = jest.requireActual('antd');
   const mockForSelect = ({
@@ -289,10 +291,83 @@ describe('CreateProduct Component', () => {
     );
 
     // Find and change the shipping select using the data-testid
-    const shippingSelect = screen.getByTestId('select-shipping-');
+    const shippingSelect = screen.getByTestId('select-shipping');
     fireEvent.change(shippingSelect, { target: { value: '1' } });
 
     // Verify the change was handled
     expect(shippingSelect.value).toBe('1');
+  });
+
+  test('submits form with all fields including category, photo and shipping', async () => {
+    // Mock the axios calls
+    axios.get.mockResolvedValueOnce({
+      data: {
+        success: true,
+        category: [{ _id: '1', name: 'Test Category' }],
+      },
+    });
+
+    axios.post.mockResolvedValue({ data: { success: true } });
+
+    render(
+      <BrowserRouter>
+        <CreateProduct />
+      </BrowserRouter>
+    );
+
+    // Wait for categories to load
+    await waitFor(() => {
+      expect(screen.queryAllByTestId(/category-option/)).toHaveLength(1);
+    });
+
+    // Fill out all form fields
+    fireEvent.change(screen.getByPlaceholderText('write a name'), {
+      target: { value: 'Test Product' },
+    });
+
+    fireEvent.change(screen.getByPlaceholderText('write a description'), {
+      target: { value: 'Test Description' },
+    });
+
+    fireEvent.change(screen.getByPlaceholderText('write a Price'), {
+      target: { value: '100' },
+    });
+
+    fireEvent.change(screen.getByPlaceholderText('write a quantity'), {
+      target: { value: '5' },
+    });
+
+    // Select category
+    const categorySelect = screen.getByTestId('select-a-category');
+    fireEvent.change(categorySelect, { target: { value: '1' } });
+
+    // Upload photo
+    const file = new File(['test'], 'test.png', { type: 'image/png' });
+    const fileInput = screen.getByLabelText('Upload Photo');
+    fireEvent.change(fileInput, {
+      target: { files: [file] },
+    });
+
+    // Select shipping with corrected selector
+    const shippingSelect = screen.getByTestId('select-shipping');
+    fireEvent.change(shippingSelect, { target: { value: '1' } });
+
+    // Submit form
+    fireEvent.click(screen.getByText('CREATE PRODUCT'));
+
+    // Verify form submission
+    await waitFor(() => {
+      expect(axios.post).toHaveBeenCalledWith(
+        '/api/v1/product/create-product',
+        expect.any(FormData)
+      );
+    });
+
+    // Verify success message
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith(
+        'Product Created Successfully'
+      );
+    });
   });
 });
