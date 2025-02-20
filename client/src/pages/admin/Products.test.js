@@ -49,7 +49,9 @@ describe('Products Component', () => {
   });
 
   test('renders the Products component correctly', async () => {
-    axios.get.mockResolvedValue({ data: { products: mockProducts } });
+    axios.get.mockResolvedValue({
+      data: { success: true, products: mockProducts },
+    });
 
     render(
       <MemoryRouter>
@@ -62,12 +64,16 @@ describe('Products Component', () => {
     expect(screen.getByText('All Products List')).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(screen.getAllByRole('link')).toHaveLength(mockProducts.length);
+      expect(
+        screen.getAllByRole('link', { class: 'product-link' })
+      ).toHaveLength(mockProducts.length);
     });
   });
 
   test('calls the API to fetch products on mount', async () => {
-    axios.get.mockResolvedValue({ data: { products: mockProducts } });
+    axios.get.mockResolvedValue({
+      data: { success: true, products: mockProducts },
+    });
 
     render(
       <MemoryRouter>
@@ -82,7 +88,9 @@ describe('Products Component', () => {
   });
 
   test('displays the correct number of product cards when API returns data', async () => {
-    axios.get.mockResolvedValue({ data: { products: mockProducts } });
+    axios.get.mockResolvedValue({
+      data: { success: true, products: mockProducts },
+    });
 
     render(
       <MemoryRouter>
@@ -91,12 +99,17 @@ describe('Products Component', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getAllByRole('link')).toHaveLength(mockProducts.length);
+      const productCards = screen.getAllByRole('link', {
+        class: 'product-link',
+      });
+      expect(productCards).toHaveLength(mockProducts.length);
     });
   });
 
   test('handles API errors gracefully and displays an error toast', async () => {
-    axios.get.mockRejectedValue(new Error('Network Error'));
+    axios.get.mockResolvedValue({
+      data: { success: false },
+    });
 
     render(
       <MemoryRouter>
@@ -105,12 +118,16 @@ describe('Products Component', () => {
     );
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith('Something Went Wrong');
+      expect(toast.error).toHaveBeenCalledWith(
+        'Something went wrong in getting products'
+      );
     });
   });
 
   test('each product card has the correct name, description, and image', async () => {
-    axios.get.mockResolvedValue({ data: { products: mockProducts } });
+    axios.get.mockResolvedValue({
+      data: { success: true, products: mockProducts },
+    });
 
     render(
       <MemoryRouter>
@@ -122,7 +139,8 @@ describe('Products Component', () => {
       mockProducts.forEach((product) => {
         expect(screen.getByText(product.name)).toBeInTheDocument();
         expect(screen.getByText(product.description)).toBeInTheDocument();
-        expect(screen.getByAltText(product.name)).toHaveAttribute(
+        const image = screen.getByAltText(product.name);
+        expect(image).toHaveAttribute(
           'src',
           `/api/v1/product/product-photo/${product._id}`
         );
@@ -131,7 +149,9 @@ describe('Products Component', () => {
   });
 
   test('product links navigate to the correct URLs', async () => {
-    axios.get.mockResolvedValue({ data: { products: mockProducts } });
+    axios.get.mockResolvedValue({
+      data: { success: true, products: mockProducts },
+    });
 
     render(
       <MemoryRouter>

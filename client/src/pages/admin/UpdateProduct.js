@@ -82,14 +82,14 @@ const UpdateProduct = () => {
         productData
       );
       if (!data?.success) {
-        throw new Error('something went wrong');
+        throw new Error('Something went wrong in updating product');
       } else {
         toast.success('Product Updated Successfully');
         navigate('/dashboard/admin/products');
       }
     } catch (error) {
       console.log(error);
-      toast.error('something went wrong');
+      toast.error('Something went wrong in updating product');
     }
   };
 
@@ -102,14 +102,14 @@ const UpdateProduct = () => {
         `/api/v1/product/delete-product/${id}`
       );
       if (!data?.success) {
-        throw new Error('Something went wrong');
+        throw new Error('Something went wrong in deleting product');
       } else {
-        toast.success('Product Deleted Succfully');
+        toast.success('Product Deleted Successfully');
         navigate('/dashboard/admin/products');
       }
     } catch (error) {
       console.log(error);
-      toast.error('Something went wrong');
+      toast.error('Something went wrong in deleting product');
     }
   };
   return (

@@ -267,7 +267,9 @@ describe('UpdateProduct Component', () => {
     fireEvent.click(screen.getByText('UPDATE PRODUCT'));
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith('something went wrong');
+      expect(toast.error).toHaveBeenCalledWith(
+        'Something went wrong in updating product'
+      );
     });
   });
 
@@ -297,7 +299,7 @@ describe('UpdateProduct Component', () => {
       );
     });
 
-    expect(toast.success).toHaveBeenCalledWith('Product Deleted Succfully');
+    expect(toast.success).toHaveBeenCalledWith('Product Deleted Successfully');
   });
 
   test('does not delete product if user cancels confirmation', async () => {
@@ -334,7 +336,9 @@ describe('UpdateProduct Component', () => {
     fireEvent.click(screen.getByText('DELETE PRODUCT'));
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith('Something went wrong');
+      expect(toast.error).toHaveBeenCalledWith(
+        'Something went wrong in deleting product'
+      );
     });
   });
 
