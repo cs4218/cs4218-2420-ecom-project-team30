@@ -1,27 +1,26 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import toast from "react-hot-toast";
-import AdminMenu from "../../components/AdminMenu";
-import Layout from "../../components/Layout";
-import { useAuth } from "../../context/auth";
-import moment from "moment";
-import { Select } from "antd";
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import toast from 'react-hot-toast';
+import AdminMenu from '../../components/AdminMenu';
+import Layout from '../../components/Layout';
+import { useAuth } from '../../context/auth';
+import moment from 'moment';
+import { Select } from 'antd';
 const { Option } = Select;
 
 const AdminOrders = () => {
-  const [status, setStatus] = useState([
-    "Not Process",
-    "Processing",
-    "Shipped",
-    "deliverd",
-    "cancel",
+  const [status] = useState([
+    'Not Process',
+    'Processing',
+    'Shipped',
+    'deliverd',
+    'cancel',
   ]);
-  const [changeStatus, setCHangeStatus] = useState("");
   const [orders, setOrders] = useState([]);
-  const [auth, setAuth] = useAuth();
+  const [auth] = useAuth();
   const getOrders = async () => {
     try {
-      const { data } = await axios.get("/api/v1/auth/all-orders");
+      const { data } = await axios.get('/api/v1/auth/all-orders');
       setOrders(data);
     } catch (error) {
       console.log(error);
@@ -37,13 +36,18 @@ const AdminOrders = () => {
       const { data } = await axios.put(`/api/v1/auth/order-status/${orderId}`, {
         status: value,
       });
-      getOrders();
+      if (!data.success) {
+        throw new Error('Something went wrong in updating status');
+      } else {
+        getOrders();
+      }
     } catch (error) {
       console.log(error);
+      toast.error('Something went wrong in updating status');
     }
   };
   return (
-    <Layout title={"All Orders Data"}>
+    <Layout title={'All Orders Data'}>
       <div className="row dashboard">
         <div className="col-md-3">
           <AdminMenu />
@@ -82,7 +86,7 @@ const AdminOrders = () => {
                       </td>
                       <td>{o?.buyer?.name}</td>
                       <td>{moment(o?.createAt).fromNow()}</td>
-                      <td>{o?.payment.success ? "Success" : "Failed"}</td>
+                      <td>{o?.payment.success ? 'Success' : 'Failed'}</td>
                       <td>{o?.products?.length}</td>
                     </tr>
                   </tbody>
@@ -96,7 +100,7 @@ const AdminOrders = () => {
                           className="card-img-top"
                           alt={p.name}
                           width="100px"
-                          height={"100px"}
+                          height={'100px'}
                         />
                       </div>
                       <div className="col-md-8">
