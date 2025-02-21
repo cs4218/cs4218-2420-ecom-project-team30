@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import axios from 'axios';
 import CategoryForm from '../../components/Form/CategoryForm';
 import { Modal } from 'antd';
-import { th } from 'date-fns/locale';
+import { da, th } from 'date-fns/locale';
 const CreateCategory = () => {
   const [categories, setCategories] = useState([]);
   const [name, setName] = useState('');
@@ -23,11 +23,11 @@ const CreateCategory = () => {
         toast.success(`${name} is created`);
         getAllCategory();
       } else {
-        throw new Error('something went wrong in input form');
+        toast.error(data?.message);
       }
     } catch (error) {
       console.log(error);
-      toast.error('something went wrong in input form');
+      toast.error('Something went wrong in input form');
     }
   };
 
@@ -38,7 +38,7 @@ const CreateCategory = () => {
       if (data.success) {
         setCategories(data.category);
       } else {
-        throw new Error('Something went wrong in getting category');
+        toast.error(data?.message);
       }
     } catch (error) {
       console.log(error);
@@ -65,7 +65,7 @@ const CreateCategory = () => {
         setVisible(false);
         getAllCategory();
       } else {
-        throw new Error('Something went wrong in updating category');
+        toast.error(data?.message);
       }
     } catch (error) {
       toast.error('Something went wrong in updating category');
@@ -82,7 +82,7 @@ const CreateCategory = () => {
 
         getAllCategory();
       } else {
-        throw new Error('Something went wrong in deleting category');
+        toast.error(data?.message);
       }
     } catch (error) {
       toast.error('Something went wrong in deleting category');

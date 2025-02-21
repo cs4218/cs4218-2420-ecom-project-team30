@@ -21,7 +21,11 @@ const AdminOrders = () => {
   const getOrders = async () => {
     try {
       const { data } = await axios.get('/api/v1/auth/all-orders');
-      setOrders(data);
+      if (!data.success) {
+        toast.error(data?.message);
+      } else {
+        setOrders(data.orders);
+      }
     } catch (error) {
       console.log(error);
     }
@@ -37,7 +41,7 @@ const AdminOrders = () => {
         status: value,
       });
       if (!data.success) {
-        throw new Error('Something went wrong in updating status');
+        toast.error(data?.message);
       } else {
         getOrders();
       }

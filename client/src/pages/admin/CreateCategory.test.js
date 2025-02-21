@@ -132,8 +132,22 @@ describe('CreateCategory Component', () => {
 
   test('shows error toast when fetching categories fails', async () => {
     axios.get.mockResolvedValueOnce({
-      data: { success: false },
+      data: { success: false, message: 'Error fetching categories' },
     });
+
+    render(
+      <BrowserRouter>
+        <CreateCategory />
+      </BrowserRouter>
+    );
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Error fetching categories');
+    });
+  });
+
+  test('shows non-API error toast when fetching categories fails', async () => {
+    axios.get.mockRejectedValueOnce(new Error('Network Error'));
 
     render(
       <BrowserRouter>
@@ -183,7 +197,7 @@ describe('CreateCategory Component', () => {
       data: { success: true, category: mockCategories },
     });
     axios.post.mockResolvedValueOnce({
-      data: { success: false },
+      data: { success: false, message: 'Error creating category' },
     });
 
     render(
@@ -198,8 +212,30 @@ describe('CreateCategory Component', () => {
     fireEvent.click(screen.getByText('Submit'));
 
     await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Error creating category');
+    });
+  });
+
+  test('handles non-API category creation failure', async () => {
+    axios.get.mockResolvedValueOnce({
+      data: { success: true, category: mockCategories },
+    });
+    axios.post.mockRejectedValueOnce(new Error('Network Error'));
+
+    render(
+      <BrowserRouter>
+        <CreateCategory />
+      </BrowserRouter>
+    );
+
+    fireEvent.change(screen.getByRole('textbox'), {
+      target: { value: 'Books' },
+    });
+    fireEvent.click(screen.getByText('Submit'));
+
+    await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith(
-        'something went wrong in input form'
+        'Something went wrong in input form'
       );
     });
   });
@@ -315,6 +351,55 @@ describe('CreateCategory Component', () => {
 
     // Verify error message
     await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Error updating category');
+    });
+  });
+
+  test('handles non-APi related category update failure', async () => {
+    // Mock initial categories load
+    axios.get.mockResolvedValueOnce({
+      data: { success: true, category: mockCategories },
+    });
+
+    // Mock the update failure
+    axios.put.mockRejectedValueOnce(new Error('Network Error'));
+
+    render(
+      <BrowserRouter>
+        <CreateCategory />
+      </BrowserRouter>
+    );
+
+    // Wait for categories to load
+    await waitFor(() => {
+      expect(screen.getByText('Electronics')).toBeInTheDocument();
+    });
+
+    // Find and click the Edit button for Electronics
+    const tableRows = screen.getAllByRole('row');
+    const electronicsRow = tableRows.find((row) =>
+      row.textContent.includes('Electronics')
+    );
+    const editButton = within(electronicsRow).getByText('Edit');
+    fireEvent.click(editButton);
+
+    // Get the modal input (the one with 'Electronics' value)
+    const inputs = screen.getAllByRole('textbox');
+    const modalInput = inputs.find((input) => input.value === 'Electronics');
+    expect(modalInput).toBeInTheDocument();
+
+    // Change the input value
+    fireEvent.change(modalInput, {
+      target: { value: 'Updated Electronics' },
+    });
+
+    // Find and click the Submit button in the modal
+    const submitButtons = screen.getAllByText('Submit');
+    const modalSubmitButton = submitButtons[submitButtons.length - 1];
+    fireEvent.click(modalSubmitButton);
+
+    // Verify error message
+    await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith(
         'Something went wrong in updating category'
       );
@@ -372,8 +457,47 @@ describe('CreateCategory Component', () => {
 
     // Mock the delete failure
     axios.delete.mockResolvedValueOnce({
-      data: { success: false },
+      data: { success: false, message: 'Error deleting category' },
     });
+
+    render(
+      <BrowserRouter>
+        <CreateCategory />
+      </BrowserRouter>
+    );
+
+    // Wait for categories to load
+    await waitFor(() => {
+      expect(screen.getByText('Electronics')).toBeInTheDocument();
+    });
+
+    // Find and click the Delete button for Electronics
+    const tableRows = screen.getAllByRole('row');
+    const electronicsRow = tableRows.find((row) =>
+      row.textContent.includes('Electronics')
+    );
+    const deleteButton = within(electronicsRow).getByText('Delete');
+    fireEvent.click(deleteButton);
+
+    // Verify error message
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Error deleting category');
+    });
+
+    // Verify the delete API was called with the correct ID
+    expect(axios.delete).toHaveBeenCalledWith(
+      '/api/v1/category/delete-category/1'
+    );
+  });
+
+  test('handles non-API related category deletion failure', async () => {
+    // Mock initial categories load
+    axios.get.mockResolvedValueOnce({
+      data: { success: true, category: mockCategories },
+    });
+
+    // Mock the delete failure
+    axios.delete.mockRejectedValueOnce(new Error('Network Error'));
 
     render(
       <BrowserRouter>

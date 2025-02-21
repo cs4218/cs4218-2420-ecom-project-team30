@@ -23,7 +23,7 @@ const CreateProduct = () => {
     try {
       const { data } = await axios.get('/api/v1/category/get-category');
       if (!data.success) {
-        throw new Error('Something went wrong in getting category');
+        toast.error(data?.message);
       }
       setCategories(data.category);
     } catch (error) {

@@ -229,11 +229,12 @@ describe('CreateProduct Component', () => {
     );
   });
 
-  test('shows error toast on get API failure', async () => {
-    // Mock the axios.get response to return success: false
+  test('shows error message when API returns success: false', async () => {
+    // Mock the axios.get response to return success: false with a message
     axios.get.mockResolvedValueOnce({
       data: {
         success: false,
+        message: 'Failed to fetch categories',
       },
     });
 
@@ -244,11 +245,9 @@ describe('CreateProduct Component', () => {
       </BrowserRouter>
     );
 
-    // Wait for the toast to be called
+    // Wait for the toast to be called with the API's error message
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith(
-        'Something went wrong in getting category'
-      );
+      expect(toast.error).toHaveBeenCalledWith('Failed to fetch categories');
     });
   });
 

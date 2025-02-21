@@ -130,6 +130,7 @@ describe('UpdateProduct Component', () => {
     axios.get.mockResolvedValueOnce({
       data: {
         success: false,
+        message: 'Product Not Found',
       },
     });
 
@@ -140,8 +141,23 @@ describe('UpdateProduct Component', () => {
     );
 
     await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Product Not Found');
+    });
+  });
+
+  test('shows non-API error toast when fetching product fails', async () => {
+    // Mock the axios.get response to return success: false
+    axios.get.mockRejectedValueOnce(new Error('Network Error'));
+
+    render(
+      <BrowserRouter>
+        <UpdateProduct />
+      </BrowserRouter>
+    );
+
+    await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith(
-        'Something went wrong in getting category'
+        'Something went wrong in getting product'
       );
     });
   });
@@ -149,8 +165,23 @@ describe('UpdateProduct Component', () => {
   test('shows error toast when fetching categories fails', async () => {
     axios.get.mockResolvedValueOnce({ data: mockProduct });
     axios.get.mockResolvedValueOnce({
-      data: { success: false },
+      data: { success: false, message: 'Category Not Found' },
     });
+
+    render(
+      <BrowserRouter>
+        <UpdateProduct />
+      </BrowserRouter>
+    );
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Category Not Found');
+    });
+  });
+
+  test('shows non-API error toast when fetching categories fails', async () => {
+    axios.get.mockResolvedValueOnce({ data: mockProduct });
+    axios.get.mockRejectedValueOnce(new Error('Network Error'));
 
     render(
       <BrowserRouter>
@@ -267,6 +298,24 @@ describe('UpdateProduct Component', () => {
     fireEvent.click(screen.getByText('UPDATE PRODUCT'));
 
     await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Product Not Updated');
+    });
+  });
+
+  test('shows non-API error toast if product update fails', async () => {
+    axios.get.mockResolvedValueOnce({ data: mockProduct });
+    axios.get.mockResolvedValueOnce({ data: mockCategories });
+    axios.put.mockRejectedValueOnce(new Error('Network Error'));
+
+    render(
+      <BrowserRouter>
+        <UpdateProduct />
+      </BrowserRouter>
+    );
+
+    fireEvent.click(screen.getByText('UPDATE PRODUCT'));
+
+    await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith(
         'Something went wrong in updating product'
       );
@@ -323,7 +372,29 @@ describe('UpdateProduct Component', () => {
   test('shows error toast if product deletion fails', async () => {
     axios.get.mockResolvedValueOnce({ data: mockProduct });
     axios.get.mockResolvedValueOnce({ data: mockCategories });
-    axios.delete.mockResolvedValueOnce({ data: { success: false } });
+    axios.delete.mockResolvedValueOnce({
+      data: { success: false, message: 'Cannot delete product' },
+    });
+
+    window.prompt = jest.fn().mockReturnValue('yes');
+
+    render(
+      <BrowserRouter>
+        <UpdateProduct />
+      </BrowserRouter>
+    );
+
+    fireEvent.click(screen.getByText('DELETE PRODUCT'));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Cannot delete product');
+    });
+  });
+
+  test('shows non-API error toast if product deletion fails', async () => {
+    axios.get.mockResolvedValueOnce({ data: mockProduct });
+    axios.get.mockResolvedValueOnce({ data: mockCategories });
+    axios.delete.mockRejectedValueOnce(new Error('Network Error'));
 
     window.prompt = jest.fn().mockReturnValue('yes');
 

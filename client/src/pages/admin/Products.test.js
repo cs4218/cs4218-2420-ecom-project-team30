@@ -108,8 +108,27 @@ describe('Products Component', () => {
 
   test('handles API errors gracefully and displays an error toast', async () => {
     axios.get.mockResolvedValue({
-      data: { success: false },
+      data: {
+        success: false,
+        message: 'Something went wrong in getting products',
+      },
     });
+
+    render(
+      <MemoryRouter>
+        <Products />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(
+        'Something went wrong in getting products'
+      );
+    });
+  });
+
+  test('handles non-API errors gracefully and displays an error toast', async () => {
+    axios.get.mockRejectedValue(new Error('Network Error'));
 
     render(
       <MemoryRouter>

@@ -12,7 +12,7 @@ const Products = () => {
     try {
       const { data } = await axios.get('/api/v1/product/get-product');
       if (!data.success) {
-        throw new Error('Something went wrong in getting products');
+        toast.error(data?.message);
       } else {
         setProducts(data.products);
       }

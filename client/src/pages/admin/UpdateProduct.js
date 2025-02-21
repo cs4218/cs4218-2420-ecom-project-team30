@@ -27,7 +27,7 @@ const UpdateProduct = () => {
         `/api/v1/product/get-product/${params.slug}`
       );
       if (!data?.success) {
-        throw new Error('Something went wrong in getting category');
+        toast.error(data?.message);
       } else {
         setName(data.product.name);
         setId(data.product._id);
@@ -40,6 +40,7 @@ const UpdateProduct = () => {
       }
     } catch (error) {
       console.log(error);
+      toast.error('Something went wrong in getting product');
     }
   };
   useEffect(() => {
@@ -51,7 +52,7 @@ const UpdateProduct = () => {
     try {
       const { data } = await axios.get('/api/v1/category/get-category');
       if (!data?.success) {
-        throw new Error('Something went wrong in getting category');
+        toast.error(data?.message);
       } else {
         setCategories(data?.category);
       }
@@ -82,7 +83,7 @@ const UpdateProduct = () => {
         productData
       );
       if (!data?.success) {
-        throw new Error('Something went wrong in updating product');
+        toast.error(data?.message);
       } else {
         toast.success('Product Updated Successfully');
         navigate('/dashboard/admin/products');
@@ -102,7 +103,7 @@ const UpdateProduct = () => {
         `/api/v1/product/delete-product/${id}`
       );
       if (!data?.success) {
-        throw new Error('Something went wrong in deleting product');
+        toast.error(data?.message);
       } else {
         toast.success('Product Deleted Successfully');
         navigate('/dashboard/admin/products');

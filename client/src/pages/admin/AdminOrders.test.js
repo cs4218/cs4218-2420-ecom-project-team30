@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import moment from 'moment';
 import '@testing-library/jest-dom';
 import React from 'react';
+import { message } from 'antd';
 
 // Mock dependencies
 jest.mock('../../context/auth', () => ({
@@ -69,52 +70,55 @@ jest.mock('react-hot-toast', () => ({
 }));
 
 describe('AdminOrders Component', () => {
-  const mockOrders = [
-    {
-      _id: 'order1',
-      status: 'Processing',
-      buyer: { name: 'John Doe' },
-      createAt: new Date().toISOString(),
-      payment: { success: true },
-      products: [
-        {
-          _id: 'prod1',
-          name: 'Laptop',
-          description:
-            'A great laptop with amazing features and specifications',
-          price: 1000,
-        },
-      ],
-    },
-    {
-      _id: 'order2',
-      status: 'Not Process',
-      buyer: { name: 'Jane Smith' },
-      createAt: new Date().toISOString(),
-      payment: { success: false },
-      products: [
-        {
-          _id: 'prod2',
-          name: 'Phone',
-          description: 'A smartphone with great camera',
-          price: 500,
-        },
-        {
-          _id: 'prod3',
-          name: 'Charger',
-          description: 'Fast charging adapter',
-          price: 50,
-        },
-      ],
-    },
-  ];
+  const mockOrders = {
+    success: true,
+    orders: [
+      {
+        _id: 'order1',
+        status: 'Processing',
+        buyer: { name: 'John Doe' },
+        createAt: new Date().toISOString(),
+        payment: { success: true },
+        products: [
+          {
+            _id: 'prod1',
+            name: 'Laptop',
+            description:
+              'A great laptop with amazing features and specifications',
+            price: 1000,
+          },
+        ],
+      },
+      {
+        _id: 'order2',
+        status: 'Not Process',
+        buyer: { name: 'Jane Smith' },
+        createAt: new Date().toISOString(),
+        payment: { success: false },
+        products: [
+          {
+            _id: 'prod2',
+            name: 'Phone',
+            description: 'A smartphone with great camera',
+            price: 500,
+          },
+          {
+            _id: 'prod3',
+            name: 'Charger',
+            description: 'Fast charging adapter',
+            price: 50,
+          },
+        ],
+      },
+    ],
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   test('renders the component with layout and admin menu', () => {
-    axios.get.mockResolvedValueOnce({ data: [] });
+    axios.get.mockResolvedValueOnce({ data: { success: true, orders: [] } });
     render(<AdminOrders />);
 
     expect(screen.getByTestId('mock-layout')).toBeInTheDocument();
@@ -142,6 +146,37 @@ describe('AdminOrders Component', () => {
     consoleLogSpy.mockRestore();
   });
 
+  test('displays error toast when API returns unsuccessful response', async () => {
+    // Mock unsuccessful API response
+    axios.get.mockResolvedValueOnce({
+      data: {
+        success: false,
+        message: 'Failed to fetch orders',
+      },
+    });
+
+    // Mock auth context to include token
+    useAuth.mockImplementationOnce(() => [
+      {
+        token: 'mock-token',
+        user: {
+          name: 'Admin',
+          email: 'admin@example.com',
+          phone: '123-456-7890',
+        },
+      },
+    ]);
+
+    render(<AdminOrders />);
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Failed to fetch orders');
+    });
+
+    // Verify that orders were not set (component should show empty state)
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+  });
+
   test('displays multiple orders with their products and truncated descriptions', async () => {
     axios.get.mockResolvedValueOnce({ data: mockOrders });
 
@@ -160,9 +195,18 @@ describe('AdminOrders Component', () => {
     expect(screen.getByText('Charger')).toBeInTheDocument();
 
     // Check truncated descriptions using substring matching
-    const laptopDesc = mockOrders[0].products[0].description.substring(0, 30);
-    const phoneDesc = mockOrders[1].products[0].description.substring(0, 30);
-    const chargerDesc = mockOrders[1].products[1].description.substring(0, 30);
+    const laptopDesc = mockOrders.orders[0].products[0].description.substring(
+      0,
+      30
+    );
+    const phoneDesc = mockOrders.orders[1].products[0].description.substring(
+      0,
+      30
+    );
+    const chargerDesc = mockOrders.orders[1].products[1].description.substring(
+      0,
+      30
+    );
 
     expect(screen.getByText(laptopDesc)).toBeInTheDocument();
     expect(screen.getByText(phoneDesc)).toBeInTheDocument();
@@ -208,7 +252,27 @@ describe('AdminOrders Component', () => {
 
   test('handles failed status update', async () => {
     axios.get.mockResolvedValueOnce({ data: mockOrders });
-    axios.put.mockResolvedValueOnce({ data: { success: false } });
+    axios.put.mockResolvedValueOnce({
+      data: { success: false, message: 'Error updating status' },
+    });
+
+    render(<AdminOrders />);
+
+    await waitFor(() => {
+      expect(screen.getByText('John Doe')).toBeInTheDocument();
+    });
+
+    const statusDropdowns = screen.getAllByRole('combobox');
+    fireEvent.change(statusDropdowns[0], { target: { value: 'Shipped' } });
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Error updating status');
+    });
+  });
+
+  test('handles non-API related failed status update', async () => {
+    axios.get.mockResolvedValueOnce({ data: mockOrders });
+    axios.put.mockRejectedValueOnce(new Error('Network Error'));
 
     render(<AdminOrders />);
 
