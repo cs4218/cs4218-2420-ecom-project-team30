@@ -149,7 +149,6 @@ describe('CreateProduct Component', () => {
   });
 
   test('shows error toast on API failure', async () => {
-    // Mock the axios.post to reject with an error
     axios.post.mockResolvedValue({
       data: { success: false, message: 'test fail' },
     });
@@ -189,7 +188,6 @@ describe('CreateProduct Component', () => {
   });
 
   test('shows something went wrong error toast on API failure', async () => {
-    // Mock the axios.post to reject with an error
     axios.post.mockRejectedValue(new Error('error'));
 
     // Mock the axios.get response
@@ -225,7 +223,9 @@ describe('CreateProduct Component', () => {
 
     // Wait for the toast to be called
     await waitFor(() =>
-      expect(toast.error).toHaveBeenCalledWith('something went wrong')
+      expect(toast.error).toHaveBeenCalledWith(
+        'Something went wrong in creating product'
+      )
     );
   });
 

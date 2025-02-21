@@ -361,7 +361,6 @@ describe('CreateCategory Component', () => {
       data: { success: true, category: mockCategories },
     });
 
-    // Mock the update failure
     axios.put.mockRejectedValueOnce(new Error('Network Error'));
 
     render(
@@ -496,7 +495,6 @@ describe('CreateCategory Component', () => {
       data: { success: true, category: mockCategories },
     });
 
-    // Mock the delete failure
     axios.delete.mockRejectedValueOnce(new Error('Network Error'));
 
     render(

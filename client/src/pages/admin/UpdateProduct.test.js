@@ -146,7 +146,6 @@ describe('UpdateProduct Component', () => {
   });
 
   test('shows non-API error toast when fetching product fails', async () => {
-    // Mock the axios.get response to return success: false
     axios.get.mockRejectedValueOnce(new Error('Network Error'));
 
     render(

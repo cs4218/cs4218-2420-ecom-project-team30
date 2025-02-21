@@ -61,7 +61,7 @@ const CreateProduct = () => {
       }
     } catch (error) {
       console.log(error);
-      toast.error('something went wrong');
+      toast.error('Something went wrong in creating product');
     }
   };
 
