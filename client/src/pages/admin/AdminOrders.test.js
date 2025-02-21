@@ -70,55 +70,52 @@ jest.mock('react-hot-toast', () => ({
 }));
 
 describe('AdminOrders Component', () => {
-  const mockOrders = {
-    success: true,
-    orders: [
-      {
-        _id: 'order1',
-        status: 'Processing',
-        buyer: { name: 'John Doe' },
-        createAt: new Date().toISOString(),
-        payment: { success: true },
-        products: [
-          {
-            _id: 'prod1',
-            name: 'Laptop',
-            description:
-              'A great laptop with amazing features and specifications',
-            price: 1000,
-          },
-        ],
-      },
-      {
-        _id: 'order2',
-        status: 'Not Process',
-        buyer: { name: 'Jane Smith' },
-        createAt: new Date().toISOString(),
-        payment: { success: false },
-        products: [
-          {
-            _id: 'prod2',
-            name: 'Phone',
-            description: 'A smartphone with great camera',
-            price: 500,
-          },
-          {
-            _id: 'prod3',
-            name: 'Charger',
-            description: 'Fast charging adapter',
-            price: 50,
-          },
-        ],
-      },
-    ],
-  };
+  const mockOrders = [
+    {
+      _id: 'order1',
+      status: 'Processing',
+      buyer: { name: 'John Doe' },
+      createAt: new Date().toISOString(),
+      payment: { success: true },
+      products: [
+        {
+          _id: 'prod1',
+          name: 'Laptop',
+          description:
+            'A great laptop with amazing features and specifications',
+          price: 1000,
+        },
+      ],
+    },
+    {
+      _id: 'order2',
+      status: 'Not Process',
+      buyer: { name: 'Jane Smith' },
+      createAt: new Date().toISOString(),
+      payment: { success: false },
+      products: [
+        {
+          _id: 'prod2',
+          name: 'Phone',
+          description: 'A smartphone with great camera',
+          price: 500,
+        },
+        {
+          _id: 'prod3',
+          name: 'Charger',
+          description: 'Fast charging adapter',
+          price: 50,
+        },
+      ],
+    },
+  ];
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   test('renders the component with layout and admin menu', () => {
-    axios.get.mockResolvedValueOnce({ data: { success: true, orders: [] } });
+    axios.get.mockResolvedValueOnce({ data: [] });
     render(<AdminOrders />);
 
     expect(screen.getByTestId('mock-layout')).toBeInTheDocument();
@@ -195,18 +192,9 @@ describe('AdminOrders Component', () => {
     expect(screen.getByText('Charger')).toBeInTheDocument();
 
     // Check truncated descriptions using substring matching
-    const laptopDesc = mockOrders.orders[0].products[0].description.substring(
-      0,
-      30
-    );
-    const phoneDesc = mockOrders.orders[1].products[0].description.substring(
-      0,
-      30
-    );
-    const chargerDesc = mockOrders.orders[1].products[1].description.substring(
-      0,
-      30
-    );
+    const laptopDesc = mockOrders[0].products[0].description.substring(0, 30);
+    const phoneDesc = mockOrders[1].products[0].description.substring(0, 30);
+    const chargerDesc = mockOrders[1].products[1].description.substring(0, 30);
 
     expect(screen.getByText(laptopDesc)).toBeInTheDocument();
     expect(screen.getByText(phoneDesc)).toBeInTheDocument();

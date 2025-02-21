@@ -21,10 +21,10 @@ const AdminOrders = () => {
   const getOrders = async () => {
     try {
       const { data } = await axios.get('/api/v1/auth/all-orders');
-      if (!data.success) {
+      if (data.success === false) {
         toast.error(data?.message);
       } else {
-        setOrders(data.orders);
+        setOrders(data);
       }
     } catch (error) {
       console.log(error);
@@ -50,6 +50,8 @@ const AdminOrders = () => {
       toast.error('Something went wrong in updating status');
     }
   };
+
+  console.log(orders);
   return (
     <Layout title={'All Orders Data'}>
       <div className="row dashboard">
