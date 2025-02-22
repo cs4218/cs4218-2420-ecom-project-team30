@@ -1,7 +1,13 @@
 import userModel from "../models/userModel";
 import JWT from "jsonwebtoken";
-import { hashPassword, comparePassword } from "../helpers/authHelper.js"
-import { registerController, loginController, forgotPasswordController } from "./authController"
+import { hashPassword, comparePassword } from "../helpers/authHelper.js";
+import {
+  registerController,
+  loginController,
+  forgotPasswordController,
+  testController,
+  updateProfileController,
+} from "./authController";
 
 jest.mock("../helpers/authHelper.js", () => ({
   hashPassword: jest.fn(),
@@ -10,7 +16,6 @@ jest.mock("../helpers/authHelper.js", () => ({
 
 jest.mock("../models/userModel.js");
 jest.mock("jsonwebtoken");
-
 
 describe("Register Controller Test", () => {
   let req, res;
@@ -109,7 +114,7 @@ describe("Register Controller Test", () => {
 
   test("registers user successfully", async () => {
     let user = { ...req.body };
-    
+
     userModel.findOne = jest.fn().mockResolvedValue(null);
     userModel.prototype.save = jest.fn().mockResolvedValue(user);
 
@@ -211,7 +216,10 @@ describe("Login controller test", () => {
     JWT.sign = jest.fn().mockResolvedValue("token");
 
     await loginController(req, res);
-    expect(comparePassword).toHaveBeenCalledWith(req.body.password, user.password);
+    expect(comparePassword).toHaveBeenCalledWith(
+      req.body.password,
+      user.password
+    );
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.send).toHaveBeenCalledWith({
       success: true,
@@ -282,7 +290,9 @@ describe("Forgot Password Controller Test", () => {
 
     await forgotPasswordController(req, res);
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.send).toHaveBeenCalledWith({ message: "New Password is required" });
+    expect(res.send).toHaveBeenCalledWith({
+      message: "New Password is required",
+    });
   });
 
   test("returns error if user is not found", async () => {
@@ -304,7 +314,9 @@ describe("Forgot Password Controller Test", () => {
     hashPassword.mockResolvedValueOnce("hashedPassword123");
 
     await forgotPasswordController(req, res);
-    expect(userModel.findByIdAndUpdate).toHaveBeenCalledWith(user._id, { password: "hashedPassword123" });
+    expect(userModel.findByIdAndUpdate).toHaveBeenCalledWith(user._id, {
+      password: "hashedPassword123",
+    });
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.send).toHaveBeenCalledWith({
       success: true,
@@ -323,4 +335,94 @@ describe("Forgot Password Controller Test", () => {
       error: new Error("Server Error"),
     });
   });
+});
+
+describe("Protected test controller", () => {
+  test("returns message", () => {
+    let req = {};
+    let res = {
+      send: jest.fn(),
+    };
+
+    testController(req, res);
+    expect(res.send).toHaveBeenCalledWith("Protected Routes");
+  });
+
+  xtest("handles error", () => {
+    let req = {};
+    let res = {
+      send: jest.fn(() => {
+        throw new Error("Server Error");
+      }),
+    };
+
+    testController(req, res);
+    expect(res.send).toHaveBeenCalledWith({ error: new Error("Server Error") });
+  });
+});
+
+describe("Profile update controller test", () => {
+  let req, res;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    req = {
+      body: {
+        _id: "123",
+        name: "John Doe",
+        email: "john@example.com",
+        phone: "12344000",
+        address: "123 Street",
+        password: "password123",
+      },
+      // user object from requireSignIn middleware
+      user: {
+        _id: "123",
+      },
+    }
+
+    res = {
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn(),
+      json: jest.fn(),
+    }
+    let user = { ...req.body };
+    userModel.findById = jest.fn().mockResolvedValue(user);
+    userModel.findByIdAndUpdate = jest.fn().mockResolvedValue(user);
+  });
+
+  test("returns error if password is less than 6 characters", async () => {
+    req.body.password = "123";
+
+    await updateProfileController(req, res);
+    expect(res.json).toHaveBeenCalledWith({ error: "Passsword is required and 6 character long" });
+  })
+
+  test("returns success message if profile is updated", async () => {
+    let user = { ...req.body };
+    
+
+    hashPassword.mockResolvedValueOnce("hashedPassword123");
+
+    await updateProfileController(req, res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.send).toHaveBeenCalledWith({
+      success: true,
+      message: "Profile Updated SUccessfully",
+      updatedUser: expect.objectContaining(user),
+    });
+  })
+
+  test("handles server error", async () => {
+    userModel.findById = jest.fn().mockRejectedValue(new Error("Server Error"));
+
+    await updateProfileController(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.send).toHaveBeenCalledWith({
+      success: false,
+      message: "Error WHile Update profile",
+      error: new Error("Server Error"),
+    });
+  })
 })
