@@ -4,7 +4,7 @@ export const createCategoryController = async (req, res) => {
   try {
     const { name } = req.body;
     if (!name) {
-      return res.status(401).send({ message: "Name is required" });
+      return res.status(400).send({ message: "Name is required" });
     }
     const existingCategory = await categoryModel.findOne({ name });
     if (existingCategory) {
@@ -32,7 +32,7 @@ export const createCategoryController = async (req, res) => {
   }
 };
 
-//update category
+// update category
 export const updateCategoryController = async (req, res) => {
   try {
     const { name } = req.body;
@@ -57,7 +57,7 @@ export const updateCategoryController = async (req, res) => {
   }
 };
 
-// get all cat
+// get all categories
 export const categoryController = async (req, res) => {
   try {
     const category = await categoryModel.find({});
@@ -76,7 +76,7 @@ export const categoryController = async (req, res) => {
   }
 };
 
-// single category
+// get single category
 export const singleCategoryController = async (req, res) => {
   try {
     const category = await categoryModel.findOne({ slug: req.params.slug });
@@ -95,14 +95,14 @@ export const singleCategoryController = async (req, res) => {
   }
 };
 
-//delete category
+// delete category
 export const deleteCategoryController = async (req, res) => {
   try {
     const { id } = req.params;
     await categoryModel.findByIdAndDelete(id);
     res.status(200).send({
       success: true,
-      message: "Categry Deleted Successfully",
+      message: "Category Deleted Successfully",
     });
   } catch (error) {
     console.log(error);
