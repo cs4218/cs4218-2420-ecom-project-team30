@@ -4,6 +4,7 @@ import React from "react";
 import { render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import AdminMenu from "../components/AdminMenu"; 
+import "@testing-library/jest-dom";
 
 describe("AdminMenu.js tests", () => {
   let component;
