@@ -1,5 +1,6 @@
 import * as controllers from './productController'
 import productModel from "../models/productModel"
+import categoryModel from '../models/categoryModel'
 import * as fs from 'fs'
 
 jest.mock('dotenv')
@@ -24,6 +25,41 @@ jest.mock("../models/productModel", () => {
   def.sort = jest.fn(() => def);
   def.estimatedDocumentCount = jest.fn(() => def);
   def.skip = jest.fn(() => def);
+  def.then = jest.fn((res, _) => {
+    res('ok')
+  });
+
+  /**
+   * The model behaves as a thenable that resolves with val.
+   * 
+   * @param {any} val 
+   */
+  def.mockResolvesToOnce = (val) => {
+    def.then.mockImplementationOnce((res, rej) => {
+      res(val)
+    })
+  }
+
+  /**
+   * The model behaves as a thenable that rejects with val.
+   * 
+   * @param {any} val 
+   */
+  def.mockRejectsWithOnce = (val) => {
+    def.then.mockImplementationOnce((res, rej) => {
+      rej(val)
+    })
+  }
+
+  return { 
+    __esModule: true,
+    default: def,
+  };
+})
+
+jest.mock("../models/categoryModel", () => {
+  const def = jest.fn();
+  def.findOne = jest.fn(() => def);
   def.then = jest.fn((res, _) => {
     res('ok')
   });
@@ -797,6 +833,65 @@ describe('Given relatedProductController', () => {
   ])('When receiving params $params', async (req) => {
     await controllers.realtedProductController(req, res);
 
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+})
+describe('Given productCategoryController', () => {
+  const category = {
+    _id: "66db427fdb0119d9234b27ef",
+    name: "Book",
+    slug: "book",
+  }
+  const products = SAMPLE_PRODUCTS.map(({photo, category: _, ...prod}) => ({...prod, category}));
+  
+  const req = {
+    params: {
+      slug: 'book'
+    }
+  };
+
+  it('When sent a request for products by category', async () => {
+    categoryModel.mockResolvesToOnce(category);
+    productModel.mockResolvesToOnce(products);
+
+    await controllers.productCategoryController(req, res);
+
+    expect(res.send).toHaveBeenCalledWith({
+      success: true,
+      category,
+      products,
+    });
+    expect(res.status).toHaveBeenCalledWith(200);
+
+  });
+
+  it('When encountering error while finding products', async () => {
+    const error = { message: 'error in productModel.then()' }
+    categoryModel.mockResolvesToOnce(category);
+    productModel.mockRejectsWithOnce(error);
+
+    await controllers.productCategoryController(req, res);
+    
+    expect(res.send).toHaveBeenCalledWith({
+      success: false,
+      error,
+      message: "Error While Getting products",
+    });
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  it('When encountering error while finding products', async () => {
+    const error = { message: 'error in categoryModel.then()' }
+    categoryModel.mockRejectsWithOnce(error);
+
+    await controllers.productCategoryController(req, res);
+    
+    expect(res.send).toHaveBeenCalledWith({
+      success: false,
+      error,
+      message: "Error While Getting products",
+    });
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
