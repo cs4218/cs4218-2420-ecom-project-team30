@@ -743,6 +743,65 @@ describe('Given searchProductController', () => {
 
 })
 
+describe('Given relatedProductController', () => {
+  const category = {
+    _id: "66db427fdb0119d9234b27ef",
+    name: "Book",
+    slug: "book",
+  }
+  const products = SAMPLE_PRODUCTS.map(({photo, category: _, ...prod}) => ({...prod, category}));
+  
+  const req = {
+    params: {
+      pid: 'pid',
+      cid: 'cid',
+    }
+  };
+
+  it('When sent a request for matching products by category', async () => {
+    productModel.mockResolvesToOnce(products);
+
+    await controllers.realtedProductController(req, res);
+
+    expect(res.send).toHaveBeenCalledWith({
+      success: true,
+      products,
+    });
+    expect(res.status).toHaveBeenCalledWith(200);
+
+    expect(productModel.find).toHaveBeenCalledWith({
+      category: req.params.cid,
+      _id: { $ne: req.params.pid },
+    })
+  });
+
+  it('When encountering error while searching product', async () => {
+    const error = { message: 'error in then()' }
+    productModel.mockRejectsWithOnce(error);
+
+    await controllers.realtedProductController(req, res);
+
+    
+    expect(res.send).toHaveBeenCalledWith({
+      success: false,
+      message: "error while geting related product",
+      error,
+    });
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  it.skip.each([
+    {params: { cid: req.params.cid }},
+    {params: { pid: req.params.pid }},
+    {params: { }},
+  ])('When receiving params $params', async (req) => {
+    await controllers.realtedProductController(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+})
+
 describe.skip('productModel Mock', () => {
   it('can call methods of productModel', async () => {
     productModel.findOne().select().populate();
