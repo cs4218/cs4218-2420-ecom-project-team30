@@ -16,6 +16,7 @@ jest.mock("../models/productModel", () => {
   def.find = jest.fn(() => def);
   def.findById = jest.fn(() => def);
   def.findByIdAndDelete = jest.fn(() => def);
+  def.findByIdAndUpdate = jest.fn(() => def);
   def.findOne = jest.fn(() => def);
   def.select = jest.fn(() => def);
   def.limit = jest.fn(() => def);
@@ -294,3 +295,207 @@ describe('Given deleteProductController', () => {
   })
 })
 
+describe('Given updateProductController', () => {
+  function createDefaultRequest() {
+    return {
+      params: {
+        pid: 'product id',
+      },
+      fields: {
+        name: 'product name',
+        description: 'product description',
+        price: 'product price',
+        category: 'product category',
+        quantity: 'product quantity',
+        shipping: 'product shipping',
+      },
+      files: { 
+        photo: {
+          path: 'photo path',
+          size: 300,
+          type: 'photo type',
+        }
+     },
+    };
+  }
+  
+  it('When sent a request to update a product', async () => {
+    
+    const req = createDefaultRequest();
+    const expectedUpdatedDocument = {
+      ...req.fields,
+      photo: {
+        ...req.files.photo,
+        data: 'photo data',
+      },
+      save: jest.fn().mockResolvedValue('ok'),
+    }
+    
+    productModel.then.mockImplementationOnce(res => {
+      res(expectedUpdatedDocument);
+    });
+    fs.readFileSync.mockReturnValueOnce(expectedUpdatedDocument.photo.data)
+
+    await controllers.updateProductController(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.send).toHaveBeenCalledWith({
+      success: true,
+      message: "Product Updated Successfully",
+      products: expectedUpdatedDocument,
+    });
+
+  })
+
+  it('When sent a request to update a without photo', async () => {
+    
+    const req = createDefaultRequest();
+    delete req.files.photo;
+
+    const expectedUpdatedDocument = {
+      ...req.fields,
+      save: jest.fn().mockResolvedValue('ok'),
+    }
+    
+    productModel.then.mockImplementationOnce(res => {
+      res(expectedUpdatedDocument);
+    });
+
+    await controllers.updateProductController(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.send).toHaveBeenCalledWith({
+      success: true,
+      message: "Product Updated Successfully",
+      products: expectedUpdatedDocument,
+    });
+    expect(fs.readFileSync).not.toHaveBeenCalled()
+
+  })
+
+  it('When sent a request but updating values fail', async () => {
+    
+    const req = createDefaultRequest();
+    const error = { message: 'error in then()' };
+    
+    productModel.then.mockImplementationOnce((_, rej) => {
+      rej(error);
+    });
+    // fs.readFileSync.mockReturnValueOnce(expectedUpdatedDocument.photo.data)
+
+    await controllers.updateProductController(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.send).toHaveBeenCalledWith({
+      success: false,
+      error,
+      message: "Error in Updte product",
+    });
+
+  })
+
+  it('When sent a request but reading file fails', async () => {
+    
+    const req = createDefaultRequest();
+    const error = { message: 'error in fs.readFileSync' };
+    const expectedUpdatedDocument = {
+      ...req.fields,
+      photo: {
+        ...req.files.photo,
+        data: 'photo data',
+      },
+      save: jest.fn().mockResolvedValue('ok'),
+    }
+
+    productModel.then.mockImplementationOnce(res => {
+      res(expectedUpdatedDocument);
+    });
+    fs.readFileSync.mockImplementationOnce(() => {
+      throw error;
+    })
+
+    await controllers.updateProductController(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.send).toHaveBeenCalledWith({
+      success: false,
+      error,
+      message: "Error in Updte product",
+    });
+
+  })
+
+  it('When sent a request but saving fails', async () => {
+    
+    const req = createDefaultRequest();
+    const error = { message: 'error in save()' };
+    const expectedUpdatedDocument = {
+      ...req.fields,
+      photo: {
+        ...req.files.photo,
+        data: 'photo data',
+      },
+      save: jest.fn().mockRejectedValue(error),
+    }
+
+    
+    productModel.then.mockImplementationOnce(res => {
+      res(expectedUpdatedDocument);
+    });
+    fs.readFileSync.mockReturnValueOnce(expectedUpdatedDocument.photo.data);
+
+    await controllers.updateProductController(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.send).toHaveBeenCalledWith({
+      success: false,
+      error,
+      message: "Error in Updte product",
+    });
+
+  })
+
+  it.each([
+    {prop: 'name', message: "Name is Required"},
+    {prop: 'description', message: "Description is Required"},
+    {prop: 'price', message: "Price is Required"},
+    {prop: 'category', message: "Category is Required"},
+    {prop: 'quantity', message: "Quantity is Required"},
+  ])('When sent a request missing a \'$prop\' parameter', async ({prop, message}) => {
+    const req = createDefaultRequest();
+    delete req.fields[prop];
+
+    await controllers.updateProductController(req, res);
+    
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.send).toHaveBeenCalledWith({
+      error: message,
+    });
+  });
+
+  it('When sent a request with photo size > 1 MB', async () => {
+    const req = createDefaultRequest();
+    req.files.photo.size = 1000001;
+
+    await controllers.updateProductController(req, res);
+    
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.send).toHaveBeenCalledWith({
+      error: "photo is Required and should be less then 1mb",
+    });
+  });
+})
+
+
+
+describe.skip('productModel Mock', () => {
+  it('can call methods of productModel', async () => {
+    productModel.findOne().select().populate();
+    return;
+  })
+  it('can create new product', async () => {
+    productModel.mockReturnValueOnce({lol: 'lol'});
+    const doc = productModel({});
+    console.log(doc.lol);
+  })
+})
