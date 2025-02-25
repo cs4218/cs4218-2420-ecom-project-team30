@@ -22,7 +22,10 @@ jest.mock("../models/productModel", () => {
   def.limit = jest.fn(() => def);
   def.populate = jest.fn(() => def);
   def.sort = jest.fn(() => def);
-  def.then = jest.fn();
+  def.estimatedDocumentCount = jest.fn(() => def);
+  def.then = jest.fn((res, _) => {
+    res('ok')
+  });
 
   return { 
     __esModule: true,
@@ -564,6 +567,38 @@ describe('Given productFiltersController', () => {
   });
 });
 
+describe('Given productCountController', () => {
+
+  it('When sent a request for product count', async () => {
+    productModel.then.mockImplementationOnce((res, _) => {
+      res(10);
+    });
+
+    await controllers.productCountController({}, res);
+
+    expect(res.send).toHaveBeenCalledWith({
+      success: true,
+      total: 10,
+    });
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  it('When sent a request for product count', async () => {
+    const error = { message: 'error in then()' }
+    productModel.then.mockImplementationOnce((_, rej) => {
+      rej(error);
+    });
+
+    await controllers.productCountController({}, res);
+
+    expect(res.send).toHaveBeenCalledWith({
+      message: "Error in product count",
+      success: false,
+      error,
+    });
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+});
 
 describe.skip('productModel Mock', () => {
   it('can call methods of productModel', async () => {
