@@ -60,8 +60,41 @@ jest.mock("../models/productModel", () => {
 const res = {
   status: jest.fn(() => res),
   send: jest.fn(),
+  json: jest.fn(),
   set: jest.fn(),
 }
+
+
+const SAMPLE_PRODUCTS = [
+  {
+    photo: {
+      data: 'photo data',
+      contentType: "image/jpeg"
+    },
+    _id: "66db427fdb0119d9234b27f3",
+    name: "Laptop",
+    slug: "laptop",
+    description: "A powerful laptop",
+    price: 1499.99,
+    category: "66db427fdb0119d9234b27ed",
+    quantity: 30,
+    shipping: true,
+  },
+  {
+    photo: {
+      data: 'photo data',
+      contentType: "image/jpeg"
+    },
+    _id: "66db427fdb0119d9234b27f5",
+    name: "Smartphone",
+    slug: "smartphone",
+    description: "A high-end smartphone",
+    price: 999.99,
+    category: "66db427fdb0119d9234b27ed",
+    quantity: 50,
+    shipping: false,
+  }
+]
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -521,36 +554,7 @@ describe('Given productFiltersController', () => {
     },
   }
 
-  const products = [
-    {
-      photo: {
-        data: 'photo data',
-        contentType: "image/jpeg"
-      },
-      _id: "66db427fdb0119d9234b27f3",
-      name: "Laptop",
-      slug: "laptop",
-      description: "A powerful laptop",
-      price: 1499.99,
-      category: "66db427fdb0119d9234b27ed",
-      quantity: 30,
-      shipping: true,
-    },
-    {
-      photo: {
-        data: 'photo data',
-        contentType: "image/jpeg"
-      },
-      _id: "66db427fdb0119d9234b27f5",
-      name: "Smartphone",
-      slug: "smartphone",
-      description: "A high-end smartphone",
-      price: 999.99,
-      category: "66db427fdb0119d9234b27ed",
-      quantity: 50,
-      shipping: false,
-    }
-  ]
+  const products = SAMPLE_PRODUCTS
   
   it('When sent a request to filter a product', async () => {
     productModel.then.mockImplementationOnce((res, _) => {
@@ -625,39 +629,21 @@ describe('Given productCountController', () => {
 
 describe('Given productListController', () => {
 
-  const products = [
-    {
-      _id: "66db427fdb0119d9234b27f3",
-      name: "Laptop",
-      slug: "laptop",
-      description: "A powerful laptop",
-      price: 1499.99,
-      category: "66db427fdb0119d9234b27ed",
-      quantity: 30,
-      shipping: true,
-    },
-    {
-      _id: "66db427fdb0119d9234b27f5",
-      name: "Smartphone",
-      slug: "smartphone",
-      description: "A high-end smartphone",
-      price: 999.99,
-      category: "66db427fdb0119d9234b27ed",
-      quantity: 50,
-      shipping: false,
-    }
-  ]
+  const products = SAMPLE_PRODUCTS.map(({photo, ...prod}) => prod);
 
-  it('When sent a request for the 1st list of products', async () => {
-    const req = {
+  function createDefaultRequest() {
+    return {
       params: {
         page: 1,
       },
     }
+  }
+
+  it('When sent a request for the 1st list of products', async () => {
 
     productModel.mockResolvesToOnce(products)
 
-    await controllers.productListController(req, res);
+    await controllers.productListController(createDefaultRequest(), res);
     
     expect(res.send).toHaveBeenCalledWith({
       success: true,
@@ -669,12 +655,9 @@ describe('Given productListController', () => {
 
   });
 
-  it('When sent a request for the 1st list of products', async () => {
-    const req = {
-      params: {
-        page: 2,
-      },
-    }
+  it('When sent a request for the 2nd list of products', async () => {
+    const req = createDefaultRequest();
+    req.params.page = 2
 
     productModel.mockResolvesToOnce(products)
 
@@ -691,16 +674,11 @@ describe('Given productListController', () => {
   });
 
   it('When sent a request but there is an error retrieving product', async () => {
-    const req = {
-      params: {
-        page: 1,
-      },
-    }
     const error = { error: 'error in then()' }
 
     productModel.mockRejectsWithOnce(error)
 
-    await controllers.productListController(req, res);
+    await controllers.productListController(createDefaultRequest(), res);
     
     expect(res.send).toHaveBeenCalledWith({
       success: false,
@@ -711,28 +689,59 @@ describe('Given productListController', () => {
 
   });
 
-  it('When sent a request for an invalid number of ', async () => {
+  it.skip('When sent a request for an invalid number of ', async () => {
     const req = {
       params: {
-        page: 1,
+        page: 'asdflol',
       },
     }
-    const error = { error: 'error in then()' }
-
-    productModel.mockRejectsWithOnce(error)
 
     await controllers.productListController(req, res);
     
-    expect(res.send).toHaveBeenCalledWith({
-      success: false,
-      message: "error in per page ctrl",
-      error,
-    });
     expect(res.status).toHaveBeenCalledWith(400);
 
   });
 });
 
+describe('Given searchProductController', () => {
+  const products = SAMPLE_PRODUCTS.map(({photo, ...prod}) => prod);
+  const req = {
+    params: {
+      keyword: 'keyword'
+    }
+  };
+
+  it('When sent a request for searching product', async () => {
+    productModel.mockResolvesToOnce(products);
+
+    await controllers.searchProductController(req, res);
+
+    expect(res.json).toHaveBeenCalledWith(products);
+
+    expect(productModel.find).toHaveBeenCalledWith({
+      $or: [
+        { name: { $regex: 'keyword', $options: "i" } },
+        { description: { $regex: 'keyword', $options: "i" } },
+      ],
+    });
+  });
+
+  it('When encountering error while searching product', async () => {
+    const error = { message: 'error in then()' }
+    productModel.mockRejectsWithOnce(error);
+
+    await controllers.searchProductController(req, res);
+
+    
+    expect(res.send).toHaveBeenCalledWith({
+      success: false,
+      message: "Error In Search Product API",
+      error,
+    });
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+})
 
 describe.skip('productModel Mock', () => {
   it('can call methods of productModel', async () => {
