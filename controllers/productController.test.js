@@ -487,6 +487,83 @@ describe('Given updateProductController', () => {
 })
 
 
+describe('Given productFiltersController', () => {
+  const req = {
+    body: {
+      checked: ['catid1', 'catid2'],
+      radio: [0, 19],
+    },
+  }
+
+  const products = [
+    {
+      photo: {
+        data: 'photo data',
+        contentType: "image/jpeg"
+      },
+      _id: "66db427fdb0119d9234b27f3",
+      name: "Laptop",
+      slug: "laptop",
+      description: "A powerful laptop",
+      price: 1499.99,
+      category: "66db427fdb0119d9234b27ed",
+      quantity: 30,
+      shipping: true,
+    },
+    {
+      photo: {
+        data: 'photo data',
+        contentType: "image/jpeg"
+      },
+      _id: "66db427fdb0119d9234b27f5",
+      name: "Smartphone",
+      slug: "smartphone",
+      description: "A high-end smartphone",
+      price: 999.99,
+      category: "66db427fdb0119d9234b27ed",
+      quantity: 50,
+      shipping: false,
+    }
+  ]
+  
+  it('When sent a request to filter a product', async () => {
+    productModel.then.mockImplementationOnce((res, _) => {
+      res(products)
+    })
+
+    await controllers.productFiltersController(req, res);
+
+    expect(res.send).toHaveBeenCalledWith({
+      success: true,
+      products,
+    });
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(productModel.find).toHaveBeenCalledWith({
+      category: ['catid1', 'catid2'],
+      price: {
+        $gte: 0, $lte: 19
+      },
+    });
+  });
+
+  it('When sent a request bur retrieving products fail', async () => {
+    const error = { message: 'error in then()' }
+
+    productModel.then.mockImplementationOnce((_, rej) => {
+      rej(error)
+    })
+
+    await controllers.productFiltersController(req, res);
+
+    expect(res.send).toHaveBeenCalledWith({
+      success: false,
+      message: "Error WHile Filtering Products",
+      error,
+    });
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+});
+
 
 describe.skip('productModel Mock', () => {
   it('can call methods of productModel', async () => {
