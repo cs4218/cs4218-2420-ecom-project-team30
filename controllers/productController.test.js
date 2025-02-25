@@ -23,9 +23,32 @@ jest.mock("../models/productModel", () => {
   def.populate = jest.fn(() => def);
   def.sort = jest.fn(() => def);
   def.estimatedDocumentCount = jest.fn(() => def);
+  def.skip = jest.fn(() => def);
   def.then = jest.fn((res, _) => {
     res('ok')
   });
+
+  /**
+   * The model behaves as a thenable that resolves with val.
+   * 
+   * @param {any} val 
+   */
+  def.mockResolvesToOnce = (val) => {
+    def.then.mockImplementationOnce((res, rej) => {
+      res(val)
+    })
+  }
+
+  /**
+   * The model behaves as a thenable that rejects with val.
+   * 
+   * @param {any} val 
+   */
+  def.mockRejectsWithOnce = (val) => {
+    def.then.mockImplementationOnce((res, rej) => {
+      rej(val)
+    })
+  }
 
   return { 
     __esModule: true,
@@ -599,6 +622,117 @@ describe('Given productCountController', () => {
     expect(res.status).toHaveBeenCalledWith(400);
   });
 });
+
+describe('Given productListController', () => {
+
+  const products = [
+    {
+      _id: "66db427fdb0119d9234b27f3",
+      name: "Laptop",
+      slug: "laptop",
+      description: "A powerful laptop",
+      price: 1499.99,
+      category: "66db427fdb0119d9234b27ed",
+      quantity: 30,
+      shipping: true,
+    },
+    {
+      _id: "66db427fdb0119d9234b27f5",
+      name: "Smartphone",
+      slug: "smartphone",
+      description: "A high-end smartphone",
+      price: 999.99,
+      category: "66db427fdb0119d9234b27ed",
+      quantity: 50,
+      shipping: false,
+    }
+  ]
+
+  it('When sent a request for the 1st list of products', async () => {
+    const req = {
+      params: {
+        page: 1,
+      },
+    }
+
+    productModel.mockResolvesToOnce(products)
+
+    await controllers.productListController(req, res);
+    
+    expect(res.send).toHaveBeenCalledWith({
+      success: true,
+      products,
+    });
+    expect(res.status).toHaveBeenCalledWith(200);
+
+    expect(productModel.skip).toHaveBeenCalledWith(0);
+
+  });
+
+  it('When sent a request for the 1st list of products', async () => {
+    const req = {
+      params: {
+        page: 2,
+      },
+    }
+
+    productModel.mockResolvesToOnce(products)
+
+    await controllers.productListController(req, res);
+    
+    expect(res.send).toHaveBeenCalledWith({
+      success: true,
+      products,
+    });
+    expect(res.status).toHaveBeenCalledWith(200);
+
+    expect(productModel.skip).toHaveBeenCalledWith(6);
+
+  });
+
+  it('When sent a request but there is an error retrieving product', async () => {
+    const req = {
+      params: {
+        page: 1,
+      },
+    }
+    const error = { error: 'error in then()' }
+
+    productModel.mockRejectsWithOnce(error)
+
+    await controllers.productListController(req, res);
+    
+    expect(res.send).toHaveBeenCalledWith({
+      success: false,
+      message: "error in per page ctrl",
+      error,
+    });
+    expect(res.status).toHaveBeenCalledWith(400);
+
+  });
+
+  it('When sent a request for an invalid number of ', async () => {
+    const req = {
+      params: {
+        page: 1,
+      },
+    }
+    const error = { error: 'error in then()' }
+
+    productModel.mockRejectsWithOnce(error)
+
+    await controllers.productListController(req, res);
+    
+    expect(res.send).toHaveBeenCalledWith({
+      success: false,
+      message: "error in per page ctrl",
+      error,
+    });
+    expect(res.status).toHaveBeenCalledWith(400);
+
+  });
+});
+
 
 describe.skip('productModel Mock', () => {
   it('can call methods of productModel', async () => {
