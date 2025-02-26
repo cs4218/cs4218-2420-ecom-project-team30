@@ -7,7 +7,11 @@ import {
   forgotPasswordController,
   testController,
   updateProfileController,
+  getOrdersController,
+  getAllOrdersController,
+  orderStatusController,
 } from "./authController";
+import orderModel from "../models/orderModel";
 
 jest.mock("../helpers/authHelper.js", () => ({
   hashPassword: jest.fn(),
@@ -15,6 +19,7 @@ jest.mock("../helpers/authHelper.js", () => ({
 }));
 
 jest.mock("../models/userModel.js");
+jest.mock("../models/orderModel.js");
 jest.mock("jsonwebtoken");
 
 describe("Register Controller Test", () => {
@@ -380,13 +385,13 @@ describe("Profile update controller test", () => {
       user: {
         _id: "123",
       },
-    }
+    };
 
     res = {
       status: jest.fn().mockReturnThis(),
       send: jest.fn(),
       json: jest.fn(),
-    }
+    };
     let user = { ...req.body };
     userModel.findById = jest.fn().mockResolvedValue(user);
     userModel.findByIdAndUpdate = jest.fn().mockResolvedValue(user);
@@ -396,12 +401,13 @@ describe("Profile update controller test", () => {
     req.body.password = "123";
 
     await updateProfileController(req, res);
-    expect(res.json).toHaveBeenCalledWith({ error: "Passsword is required and 6 character long" });
-  })
+    expect(res.json).toHaveBeenCalledWith({
+      error: "Passsword is required and 6 character long",
+    });
+  });
 
   test("returns success message if profile is updated", async () => {
     let user = { ...req.body };
-    
 
     hashPassword.mockResolvedValueOnce("hashedPassword123");
 
@@ -412,7 +418,7 @@ describe("Profile update controller test", () => {
       message: "Profile Updated SUccessfully",
       updatedUser: expect.objectContaining(user),
     });
-  })
+  });
 
   test("handles server error", async () => {
     userModel.findById = jest.fn().mockRejectedValue(new Error("Server Error"));
@@ -424,5 +430,178 @@ describe("Profile update controller test", () => {
       message: "Error WHile Update profile",
       error: new Error("Server Error"),
     });
-  })
-})
+  });
+});
+
+describe("Get Orders Controller Test", () => {
+  let req, res;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    req = {
+      user: {
+        _id: "123",
+      },
+    };
+
+    res = {
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn(),
+      json: jest.fn(),
+    };
+    
+  });
+
+  test("returns orders successfully", async () => {
+    const orders = [
+      {
+        _id: "order1",
+        buyer: { _id: "123", name: "John Doe" },
+        products: [{ _id: "product1", name: "Product 1" }],
+      },
+    ];
+
+    orderModel.find = jest.fn().mockReturnValue({
+      populate: jest.fn().mockReturnValue({
+        populate: jest.fn().mockReturnValue(orders),
+      }),
+    });
+
+    await getOrdersController(req, res);
+    expect(orderModel.find).toHaveBeenCalledWith({ buyer: req.user._id });
+    expect(res.json).toHaveBeenCalledWith(orders);
+  });
+
+  test("handles server error", async () => {
+    orderModel.find = jest.fn().mockReturnValue({
+      populate: jest.fn().mockReturnValue({
+        populate: jest.fn().mockRejectedValue(new Error("Server Error")),
+      }),
+    });
+
+    await getOrdersController(req, res);
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.send).toHaveBeenCalledWith({
+      success: false,
+      message: "Error WHile Geting Orders",
+      error: new Error("Server Error"),
+    });
+  });
+});
+
+describe("Get All Orders Controller Test", () => {
+  let req, res;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    req = {
+      user: {
+        _id: "123",
+      },
+    };
+
+    res = {
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn(),
+      json: jest.fn(),
+    };
+  });
+
+  test("returns all orders successfully", async () => {
+    const orders = [
+      {
+        _id: "order1",
+        buyer: { _id: "123", name: "John Doe" },
+        products: [{ _id: "product1", name: "Product 1" }],
+      },
+    ];
+    const sortSpy = jest.fn().mockReturnValue(orders);
+
+    orderModel.find = jest.fn().mockReturnValue({
+      populate: jest.fn().mockReturnValue({
+        populate: jest.fn().mockReturnValue({
+          sort: sortSpy,
+        }),
+      }),
+    });
+
+    await getAllOrdersController(req, res);
+    expect(orderModel.find).toHaveBeenCalledWith({});
+    expect(sortSpy).toHaveBeenCalledWith({ createdAt: "-1" });
+    expect(res.json).toHaveBeenCalledWith(orders);
+  });
+
+  test("handles server error", async () => {
+    orderModel.find = jest.fn().mockReturnValue({
+      populate: jest.fn().mockReturnValue({
+        populate: jest.fn().mockReturnValue({
+          sort: jest.fn().mockRejectedValue(new Error("Server Error")),
+        }),
+      }),
+    });
+
+    await getAllOrdersController(req, res);
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.send).toHaveBeenCalledWith({
+      success: false,
+      message: "Error WHile Geting Orders",
+      error: new Error("Server Error"),
+    });
+  });
+});
+
+describe("Order Status Controller Test", () => {
+  let req, res;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    req = {
+      params: {
+        orderId: "order1",
+      },
+      body: {
+        status: "Shipped",
+      },
+    };
+
+    res = {
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn(),
+      json: jest.fn(),
+    };
+  });
+
+  test("returns updated order status", async () => {
+    const order = {
+      _id: "order1",
+      buyer: { _id: "123", name: "John Doe" },
+      products: [{ _id: "product1", name: "Product 1" }],
+      status: "Shipped",
+    };
+
+    orderModel.findByIdAndUpdate = jest.fn().mockResolvedValue(order);
+
+    await orderStatusController(req, res);
+    expect(orderModel.findByIdAndUpdate).toHaveBeenCalledWith(
+      req.params.orderId,
+      { status: req.body.status },
+      { new: true }
+    );
+    expect(res.json).toHaveBeenCalledWith(order);
+  });
+
+  test("handles server error", async () => {
+    orderModel.findByIdAndUpdate = jest.fn().mockRejectedValue(new Error("Server Error"));
+
+    await orderStatusController(req, res);
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.send).toHaveBeenCalledWith({
+      success: false,
+      message: "Error While Updateing Order",
+      error: new Error("Server Error"),
+    });
+  });
+});
