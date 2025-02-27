@@ -1,24 +1,24 @@
-import React, { useState, useEffect } from "react";
-import Layout from "./../../components/Layout";
-import AdminMenu from "./../../components/AdminMenu";
-import toast from "react-hot-toast";
-import axios from "axios";
-import { Select } from "antd";
-import { useNavigate, useParams } from "react-router-dom";
+import React, { useState, useEffect } from 'react';
+import Layout from './../../components/Layout';
+import AdminMenu from './../../components/AdminMenu';
+import toast from 'react-hot-toast';
+import axios from 'axios';
+import { Select } from 'antd';
+import { useNavigate, useParams } from 'react-router-dom';
 const { Option } = Select;
 
 const UpdateProduct = () => {
   const navigate = useNavigate();
   const params = useParams();
   const [categories, setCategories] = useState([]);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [price, setPrice] = useState("");
-  const [category, setCategory] = useState("");
-  const [quantity, setQuantity] = useState("");
-  const [shipping, setShipping] = useState("");
-  const [photo, setPhoto] = useState("");
-  const [id, setId] = useState("");
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [price, setPrice] = useState('');
+  const [category, setCategory] = useState('');
+  const [quantity, setQuantity] = useState('');
+  const [shipping, setShipping] = useState('');
+  const [photo, setPhoto] = useState('');
+  const [id, setId] = useState('');
 
   //get single product
   const getSingleProduct = async () => {
@@ -26,16 +26,21 @@ const UpdateProduct = () => {
       const { data } = await axios.get(
         `/api/v1/product/get-product/${params.slug}`
       );
-      setName(data.product.name);
-      setId(data.product._id);
-      setDescription(data.product.description);
-      setPrice(data.product.price);
-      setPrice(data.product.price);
-      setQuantity(data.product.quantity);
-      setShipping(data.product.shipping);
-      setCategory(data.product.category._id);
+      if (!data?.success) {
+        toast.error(data?.message);
+      } else {
+        setName(data.product.name);
+        setId(data.product._id);
+        setDescription(data.product.description);
+        setPrice(data.product.price);
+        setPrice(data.product.price);
+        setQuantity(data.product.quantity);
+        setShipping(data.product.shipping ? '1' : '0');
+        setCategory(data.product.category._id);
+      }
     } catch (error) {
       console.log(error);
+      toast.error('Something went wrong in getting product');
     }
   };
   useEffect(() => {
@@ -45,13 +50,15 @@ const UpdateProduct = () => {
   //get all category
   const getAllCategory = async () => {
     try {
-      const { data } = await axios.get("/api/v1/category/get-category");
-      if (data?.success) {
+      const { data } = await axios.get('/api/v1/category/get-category');
+      if (!data?.success) {
+        toast.error(data?.message);
+      } else {
         setCategories(data?.category);
       }
     } catch (error) {
       console.log(error);
-      toast.error("Something wwent wrong in getting catgeory");
+      toast.error('Something went wrong in getting category');
     }
   };
 
@@ -64,45 +71,50 @@ const UpdateProduct = () => {
     e.preventDefault();
     try {
       const productData = new FormData();
-      productData.append("name", name);
-      productData.append("description", description);
-      productData.append("price", price);
-      productData.append("quantity", quantity);
-      photo && productData.append("photo", photo);
-      productData.append("category", category);
-      const { data } = axios.put(
+      productData.append('name', name);
+      productData.append('description', description);
+      productData.append('price', price);
+      productData.append('quantity', quantity);
+      photo && productData.append('photo', photo);
+      productData.append('category', category);
+      productData.append('shipping', shipping);
+      const { data } = await axios.put(
         `/api/v1/product/update-product/${id}`,
         productData
       );
-      if (data?.success) {
+      if (!data?.success) {
         toast.error(data?.message);
       } else {
-        toast.success("Product Updated Successfully");
-        navigate("/dashboard/admin/products");
+        toast.success('Product Updated Successfully');
+        navigate('/dashboard/admin/products');
       }
     } catch (error) {
       console.log(error);
-      toast.error("something went wrong");
+      toast.error('Something went wrong in updating product');
     }
   };
 
   //delete a product
   const handleDelete = async () => {
     try {
-      let answer = window.prompt("Are You Sure want to delete this product ? ");
+      let answer = window.prompt('Are You Sure want to delete this product ? ');
       if (!answer) return;
       const { data } = await axios.delete(
         `/api/v1/product/delete-product/${id}`
       );
-      toast.success("Product DEleted Succfully");
-      navigate("/dashboard/admin/products");
+      if (!data?.success) {
+        toast.error(data?.message);
+      } else {
+        toast.success('Product Deleted Successfully');
+        navigate('/dashboard/admin/products');
+      }
     } catch (error) {
       console.log(error);
-      toast.error("Something went wrong");
+      toast.error('Something went wrong in deleting product');
     }
   };
   return (
-    <Layout title={"Dashboard - Create Product"}>
+    <Layout title={'Dashboard - Create Product'}>
       <div className="container-fluid m-3 p-3">
         <div className="row">
           <div className="col-md-3">
@@ -130,7 +142,7 @@ const UpdateProduct = () => {
               </Select>
               <div className="mb-3">
                 <label className="btn btn-outline-secondary col-md-12">
-                  {photo ? photo.name : "Upload Photo"}
+                  {photo ? photo.name : 'Upload Photo'}
                   <input
                     type="file"
                     name="photo"
@@ -146,7 +158,7 @@ const UpdateProduct = () => {
                     <img
                       src={URL.createObjectURL(photo)}
                       alt="product_photo"
-                      height={"200px"}
+                      height={'200px'}
                       className="img img-responsive"
                     />
                   </div>
@@ -155,7 +167,7 @@ const UpdateProduct = () => {
                     <img
                       src={`/api/v1/product/product-photo/${id}`}
                       alt="product_photo"
-                      height={"200px"}
+                      height={'200px'}
                       className="img img-responsive"
                     />
                   </div>
@@ -208,7 +220,7 @@ const UpdateProduct = () => {
                   onChange={(value) => {
                     setShipping(value);
                   }}
-                  value={shipping ? "yes" : "No"}
+                  value={shipping ? 'yes' : 'No'}
                 >
                   <Option value="0">No</Option>
                   <Option value="1">Yes</Option>
