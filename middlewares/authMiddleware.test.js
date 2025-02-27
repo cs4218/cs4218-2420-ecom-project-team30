@@ -38,7 +38,7 @@ describe("requireSignIn middleware test", () => {
 
     await requireSignIn(req, res, next);
 
-    expect(req.user).toBeUndefined();
+    expect(req).not.toHaveProperty('user');
     expect(next).not.toHaveBeenCalled();
   })
 })
