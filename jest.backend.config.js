@@ -10,7 +10,13 @@ export default {
 
   // jest code coverage
   collectCoverage: true,
-  // collectCoverageFrom: ["controllers/**", "routes/**"],
+  collectCoverageFrom: [
+    "<rootDir>/**/*.js", 
+    "!**/client/**",
+    "!**/coverage/**",
+    "!**/playwright-report/**",
+    "!**/tests-examples/**",
+  ],
   // coverageThreshold: {
   //   global: {
   //     lines: 20,
