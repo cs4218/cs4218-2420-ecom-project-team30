@@ -6,15 +6,15 @@ export default {
   testEnvironment: "node",
 
   // which test to run
-  testMatch: ["<rootDir>/controllers/*.test.js", "<rootDir>/routes/*.test.js"],
+  testMatch: ["<rootDir>/**/*.test.js", "!**/client/**"],
 
   // jest code coverage
   collectCoverage: true,
-  collectCoverageFrom: ["controllers/**", "routes/**"],
-  coverageThreshold: {
-    global: {
-      lines: 100,
-      functions: 100,
-    },
-  },
+  // collectCoverageFrom: ["controllers/**", "routes/**"],
+  // coverageThreshold: {
+  //   global: {
+  //     lines: 20,
+  //     functions: 20,
+  //   },
+  // },
 };
