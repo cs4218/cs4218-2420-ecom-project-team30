@@ -27,9 +27,9 @@ jobs:
           npm install
       
       - name: Run Frontend tests
-        run: npm run test:frontend
-        continue-on-error: true
+        run: npm run test:frontend -- --silent
+        # continue-on-error: true
         
       - name: Run Backend tests
-        run: npm run test:backend
-        continue-on-error: true
+        run: npm run test:backend -- --silent
+        # continue-on-error: true
